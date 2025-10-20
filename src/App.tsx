@@ -1,19 +1,17 @@
 import { Route, Routes } from "react-router-dom";
 
 import IndexPage from "@/pages/index";
-import DocsPage from "@/pages/docs";
-import PricingPage from "@/pages/pricing";
-import BlogPage from "@/pages/blog";
-import AboutPage from "@/pages/about";
+import ChatMessagesPage from "@/pages/chat-messages";
+import AIDigestPage from "@/pages/ai-digest";
+import GroupsPage from "@/pages/groups";
 
 function App() {
   return (
     <Routes>
       <Route element={<IndexPage />} path="/" />
-      <Route element={<DocsPage />} path="/docs" />
-      <Route element={<PricingPage />} path="/pricing" />
-      <Route element={<BlogPage />} path="/blog" />
-      <Route element={<AboutPage />} path="/about" />
+      <Route element={<ChatMessagesPage />} path="/chat-messages" />
+      <Route element={<AIDigestPage />} path="/ai-digest" />
+      <Route element={<GroupsPage />} path="/groups" />
     </Routes>
   );
 }

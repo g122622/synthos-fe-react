@@ -1,62 +1,42 @@
 export type SiteConfig = typeof siteConfig;
 
 export const siteConfig = {
-  name: "Vite + HeroUI",
-  description: "Make beautiful websites regardless of your design experience.",
+  name: "Synthos WebUI",
+  description: "QQ聊天记录全链路总结功能",
   navItems: [
     {
-      label: "Home",
+      label: "首页",
       href: "/",
     },
     {
-      label: "Docs",
-      href: "/docs",
+      label: "聊天记录",
+      href: "/chat-messages",
     },
     {
-      label: "Pricing",
-      href: "/pricing",
+      label: "摘要结果",
+      href: "/ai-digest",
     },
     {
-      label: "Blog",
-      href: "/blog",
-    },
-    {
-      label: "About",
-      href: "/about",
+      label: "群组管理",
+      href: "/groups",
     },
   ],
   navMenuItems: [
     {
-      label: "Profile",
-      href: "/profile",
+      label: "首页",
+      href: "/",
     },
     {
-      label: "Dashboard",
-      href: "/dashboard",
+      label: "聊天记录",
+      href: "/chat-messages",
     },
     {
-      label: "Projects",
-      href: "/projects",
+      label: "摘要结果",
+      href: "/ai-digest",
     },
     {
-      label: "Team",
-      href: "/team",
-    },
-    {
-      label: "Calendar",
-      href: "/calendar",
-    },
-    {
-      label: "Settings",
-      href: "/settings",
-    },
-    {
-      label: "Help & Feedback",
-      href: "/help-feedback",
-    },
-    {
-      label: "Logout",
-      href: "/logout",
+      label: "群组管理",
+      href: "/groups",
     },
   ],
   links: {
