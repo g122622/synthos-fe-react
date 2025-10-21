@@ -29,6 +29,7 @@ interface TopicItem {
     detail: string;
     timeStart: number; // 改为 number 以统一时间戳
     timeEnd: number;
+    groupId: string; // 添加groupId字段
 }
 
 // 创建一个函数来解析contributors字符串为数组
@@ -133,23 +134,29 @@ export default function LatestTopicsPage() {
             const startTime = start.getTime();
             const endTime = end.getTime();
 
-            let allSessionIds: string[] = [];
+            let allSessionIds: { sessionId: string; groupId: string }[] = []; // 修改类型以包含groupId
 
             for (const groupId of groupIds) {
                 try {
                     const sessionResponse = await getSessionIdsByGroupIdAndTimeRange(groupId, startTime, endTime);
 
                     if (sessionResponse.success) {
-                        allSessionIds = [...allSessionIds, ...sessionResponse.data];
+                        // 为每个sessionId关联groupId
+                        const sessionsWithGroupId = sessionResponse.data.map(sessionId => ({
+                            sessionId,
+                            groupId
+                        }));
+                        allSessionIds = [...allSessionIds, ...sessionsWithGroupId];
                     }
                 } catch (error) {
                     console.error(`获取群组 ${groupId} 的会话ID失败:`, error);
                 }
             }
 
-            const sessionWithDuration: { sessionId: string; timeStart: number; timeEnd: number }[] = [];
+            const sessionWithDuration: { sessionId: string; timeStart: number; timeEnd: number; groupId: string }[] =
+                [];
 
-            for (const sessionId of allSessionIds) {
+            for (const { sessionId, groupId } of allSessionIds) {
                 try {
                     const timeResponse = await getSessionTimeDuration(sessionId);
 
@@ -157,7 +164,8 @@ export default function LatestTopicsPage() {
                         sessionWithDuration.push({
                             sessionId,
                             timeStart: timeResponse.data.timeStart,
-                            timeEnd: timeResponse.data.timeEnd
+                            timeEnd: timeResponse.data.timeEnd,
+                            groupId // 添加groupId
                         });
                     }
                 } catch (error) {
@@ -169,7 +177,7 @@ export default function LatestTopicsPage() {
 
             const allTopics: TopicItem[] = [];
 
-            for (const { sessionId, timeStart, timeEnd } of sessionWithDuration) {
+            for (const { sessionId, timeStart, timeEnd, groupId } of sessionWithDuration) {
                 // 跳过不在当前筛选时间范围内的会话（可选，根据业务需求）
                 if (timeEnd < startTime || timeStart > endTime) continue;
 
@@ -180,7 +188,8 @@ export default function LatestTopicsPage() {
                         const topicsWithTime = digestResponse.data.map(topic => ({
                             ...topic,
                             timeStart,
-                            timeEnd
+                            timeEnd,
+                            groupId // 添加groupId
                         }));
 
                         allTopics.push(...topicsWithTime);
@@ -318,11 +327,17 @@ export default function LatestTopicsPage() {
                                                             </Chip>
                                                         </div>
                                                     </CardHeader>
-                                                    <CardBody className="relative">
+                                                    <CardBody className="relative pb-9">
                                                         <HighlightedDetail
                                                             contributors={contributorsArray}
                                                             detail={topic.detail}
                                                         />
+                                                        {/* 在左下角添加群ID的Chip */}
+                                                        <div className="absolute bottom-3 left-3">
+                                                            <Chip size="sm" variant="flat">
+                                                                群ID: {topic.groupId}
+                                                            </Chip>
+                                                        </div>
                                                         <div className="absolute bottom-3 right-3">
                                                             <Dropdown>
                                                                 <DropdownTrigger>
@@ -359,6 +374,12 @@ export default function LatestTopicsPage() {
                                                                         <div className="flex flex-col gap-1">
                                                                             <p className="font-medium">会话ID</p>
                                                                             <p className="text-sm">{topic.sessionId}</p>
+                                                                        </div>
+                                                                    </DropdownItem>
+                                                                    <DropdownItem key="groupId" textValue="群ID">
+                                                                        <div className="flex flex-col gap-1">
+                                                                            <p className="font-medium">群ID</p>
+                                                                            <p className="text-sm">{topic.groupId}</p>
                                                                         </div>
                                                                     </DropdownItem>
                                                                 </DropdownMenu>
