@@ -146,7 +146,7 @@ export default function LatestTopicsPage() {
                         ) : currentTopics.length > 0 ? (
                             <div className="flex flex-col gap-4">
                                 <ScrollShadow className="max-h-[600px]">
-                                    <div className="flex flex-col gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                         {currentTopics.map((topic, index) => (
                                             <Card
                                                 key={`${topic.topicId}-${index}`}
@@ -155,7 +155,9 @@ export default function LatestTopicsPage() {
                                                 <CardHeader className="flex flex-col gap-2">
                                                     <div className="flex justify-between items-start">
                                                         <h3 className="text-lg font-bold">{topic.topic}</h3>
-                                                        <Chip size="sm" variant="flat">
+                                                    </div>
+                                                    <p className="text-default-500 text-sm">
+                                                        <Chip size="sm" variant="flat" className="mr-1">
                                                             {new Date(topic.timeStart).toLocaleDateString("zh-CN", {
                                                                 month: "short",
                                                                 day: "numeric",
@@ -163,7 +165,8 @@ export default function LatestTopicsPage() {
                                                                 minute: "2-digit"
                                                             })}
                                                         </Chip>
-                                                        <Chip size="sm" variant="flat">
+                                                        to
+                                                        <Chip size="sm" variant="flat" className="ml-1">
                                                             {new Date(topic.timeEnd).toLocaleDateString("zh-CN", {
                                                                 month: "short",
                                                                 day: "numeric",
@@ -171,9 +174,6 @@ export default function LatestTopicsPage() {
                                                                 minute: "2-digit"
                                                             })}
                                                         </Chip>
-                                                    </div>
-                                                    <p className="text-default-500 text-sm">
-                                                        会话ID: {topic.sessionId}
                                                     </p>
                                                 </CardHeader>
                                                 <CardBody>
@@ -184,6 +184,9 @@ export default function LatestTopicsPage() {
                                                         </Chip>
                                                         <Chip color="primary" size="sm" variant="flat">
                                                             ID: {topic.topicId.slice(0, 8)}...
+                                                        </Chip>
+                                                        <Chip size="sm" variant="flat">
+                                                            会话ID: {topic.sessionId}
                                                         </Chip>
                                                     </div>
                                                 </CardBody>
