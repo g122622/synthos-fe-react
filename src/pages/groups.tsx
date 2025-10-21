@@ -4,8 +4,9 @@ import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/table";
 import { Chip } from "@heroui/chip";
 import { Spinner } from "@heroui/spinner";
+
 import { getGroupDetails } from "@/services/api";
-import { GroupDetailsRecord, GroupDetail } from "@/types/app";
+import { GroupDetailsRecord } from "@/types/app";
 import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
 
@@ -19,6 +20,7 @@ export default function GroupsPage() {
             setIsLoading(true);
             try {
                 const response = await getGroupDetails();
+
                 setIsLoading(false);
 
                 if (response.success) {
@@ -83,13 +85,13 @@ export default function GroupsPage() {
 
                 <Card className="mt-6">
                     <CardHeader>
-                        <div className="flex justify-between items-center">
+                        <div className="flex justify-between items-center w-full p-3">
                             <h3 className="text-lg font-bold">群组列表</h3>
                             <Button
                                 color="primary"
+                                isLoading={isLoading}
                                 size="sm"
                                 onPress={() => window.location.reload()}
-                                isLoading={isLoading}
                             >
                                 {isLoading ? <Spinner size="sm" /> : "刷新"}
                             </Button>
@@ -112,16 +114,10 @@ export default function GroupsPage() {
                                 <TableBody emptyContent={"未找到群组信息"}>
                                     {Object.entries(groups).map(([groupId, groupDetail]) => (
                                         <TableRow key={groupId}>
-                                            <TableCell className="font-semibold">
-                                                {groupId}
-                                            </TableCell>
+                                            <TableCell className="font-semibold">{groupId}</TableCell>
                                             <TableCell>
                                                 <Chip
-                                                    color={
-                                                        groupDetail.IM === "QQ"
-                                                            ? "primary"
-                                                            : "secondary"
-                                                    }
+                                                    color={groupDetail.IM === "QQ" ? "primary" : "secondary"}
                                                     variant="flat"
                                                 >
                                                     {groupDetail.IM}
@@ -130,19 +126,13 @@ export default function GroupsPage() {
                                             <TableCell>{groupDetail.groupIntroduction}</TableCell>
                                             <TableCell>
                                                 <Chip
-                                                    color={getSplitStrategyColor(
-                                                        groupDetail.splitStrategy
-                                                    )}
+                                                    color={getSplitStrategyColor(groupDetail.splitStrategy)}
                                                     variant="flat"
                                                 >
-                                                    {getSplitStrategyLabel(
-                                                        groupDetail.splitStrategy
-                                                    )}
+                                                    {getSplitStrategyLabel(groupDetail.splitStrategy)}
                                                 </Chip>
                                             </TableCell>
-                                            <TableCell>
-                                                {getAIModelLabel(groupDetail.aiModel)}
-                                            </TableCell>
+                                            <TableCell>{getAIModelLabel(groupDetail.aiModel)}</TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>
@@ -151,7 +141,7 @@ export default function GroupsPage() {
                     </CardBody>
                 </Card>
 
-                <Card className="mt-6">
+                {/* <Card className="mt-6">
                     <CardHeader>
                         <h3 className="text-lg font-bold">使用说明</h3>
                     </CardHeader>
@@ -185,7 +175,7 @@ export default function GroupsPage() {
                             </div>
                         </div>
                     </CardBody>
-                </Card>
+                </Card> */}
             </section>
         </DefaultLayout>
     );

@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@heroui/button";
-import { Input } from "@heroui/input";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/table";
 import { Pagination } from "@heroui/pagination";
@@ -9,6 +8,7 @@ import { DateRangePicker } from "@heroui/react";
 import { Spinner } from "@heroui/spinner";
 import { useAsyncList } from "@react-stately/data";
 import { today, getLocalTimeZone } from "@internationalized/date";
+
 import { getChatMessagesByGroupId, getGroupDetails } from "@/services/api";
 import { ChatMessage, GroupDetailsRecord } from "@/types/app";
 import { title } from "@/components/primitives";
@@ -30,10 +30,12 @@ export default function ChatMessagesPage() {
         const fetchGroups = async () => {
             try {
                 const response = await getGroupDetails();
+
                 if (response.success) {
                     setGroups(response.data);
                     // 默认选择第一个群组
                     const groupIds = Object.keys(response.data);
+
                     if (groupIds.length > 0) {
                         setSelectedGroup(groupIds[0]);
                     }
@@ -73,6 +75,7 @@ export default function ChatMessagesPage() {
                     };
                 } else {
                     console.error("获取聊天记录失败:", response.message);
+
                     return {
                         items: []
                     };
@@ -80,6 +83,7 @@ export default function ChatMessagesPage() {
             } catch (error) {
                 setIsLoading(false);
                 console.error("获取聊天记录失败:", error);
+
                 return {
                     items: []
                 };
@@ -111,19 +115,20 @@ export default function ChatMessagesPage() {
 
                 <Card className="mt-6">
                     <CardHeader>
-                        <div className="flex flex-col md:flex-row gap-4 items-end">
+                        <div className="flex flex-col md:flex-row gap-4 items-center justify-start w-full">
                             <div className="flex-1 w-full">
                                 <Select
+                                    className="max-w-xs"
                                     label="选择群组"
                                     placeholder="请选择群组"
                                     selectedKeys={[selectedGroup]}
                                     onSelectionChange={keys => {
                                         if (keys !== "all") {
                                             const selectedKey = Array.from(keys)[0] as string;
+
                                             setSelectedGroup(selectedKey);
                                         }
                                     }}
-                                    className="max-w-xs"
                                 >
                                     {Object.keys(groups).map(groupId => (
                                         <SelectItem key={groupId} value={groupId}>
@@ -135,27 +140,23 @@ export default function ChatMessagesPage() {
 
                             <div className="flex-1 w-full">
                                 <DateRangePicker
-                                    label="选择时间范围"
+                                    className="max-w-xs"
                                     defaultValue={{
                                         start: sevenDaysAgo,
                                         end: todayDate
                                     }}
+                                    label="选择时间范围"
                                     onChange={range => {
                                         if (range) {
                                             // 重新加载数据
                                             list.reload();
                                         }
                                     }}
-                                    className="max-w-xs"
                                 />
                             </div>
 
                             <div className="flex gap-2">
-                                <Button
-                                    color="primary"
-                                    onPress={() => list.reload()}
-                                    isLoading={isLoading}
-                                >
+                                <Button color="primary" isLoading={isLoading} onPress={() => list.reload()}>
                                     {isLoading ? <Spinner size="sm" /> : "查询"}
                                 </Button>
                             </div>
@@ -192,17 +193,13 @@ export default function ChatMessagesPage() {
                                     </TableHeader>
                                     <TableBody emptyContent={"未找到相关聊天记录"}>
                                         {list.items
-                                            .slice(
-                                                (currentPage - 1) * pageSize,
-                                                currentPage * pageSize
-                                            )
+                                            .slice((currentPage - 1) * pageSize, currentPage * pageSize)
                                             .map(message => (
                                                 <TableRow key={message.msgId}>
                                                     <TableCell>
                                                         <div className="flex flex-col">
                                                             <span className="font-semibold">
-                                                                {message.senderGroupNickname ||
-                                                                    message.senderNickname}
+                                                                {message.senderGroupNickname || message.senderNickname}
                                                             </span>
                                                             <span className="text-sm text-default-500">
                                                                 {message.senderId}
@@ -217,9 +214,7 @@ export default function ChatMessagesPage() {
                                                             {message.messageContent}
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell>
-                                                        {formatTimestamp(message.timestamp)}
-                                                    </TableCell>
+                                                    <TableCell>{formatTimestamp(message.timestamp)}</TableCell>
                                                     <TableCell>{message.sessionId}</TableCell>
                                                 </TableRow>
                                             ))}

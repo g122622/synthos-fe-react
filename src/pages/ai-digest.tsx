@@ -7,11 +7,7 @@ import { Tabs, Tab } from "@heroui/tabs";
 import { Accordion, AccordionItem } from "@heroui/accordion";
 import { Spinner } from "@heroui/spinner";
 import { useAsyncList } from "@react-stately/data";
-import {
-    getAIDigestResultsBySessionId,
-    getAIDigestResultByTopicId,
-    isSessionSummarized
-} from "@/services/api";
+import { getAIDigestResultsBySessionId, getAIDigestResultByTopicId, isSessionSummarized } from "@/services/api";
 import { AIDigestResult } from "@/types/app";
 import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
@@ -122,7 +118,7 @@ export default function AIDigestPage() {
                     <Tab key="session" title="按会话查询">
                         <Card className="mt-4">
                             <CardHeader>
-                                <div className="flex flex-col md:flex-row gap-4 items-end">
+                                <div className="flex flex-col md:flex-row gap-4 items-end w-full">
                                     <div className="flex-1 w-full">
                                         <Input
                                             label="会话ID"
@@ -143,12 +139,8 @@ export default function AIDigestPage() {
                                     </div>
                                 </div>
                                 {isSessionChecked && (
-                                    <div
-                                        className={`mt-2 ${isSummarized ? "text-success" : "text-warning"}`}
-                                    >
-                                        {isSummarized
-                                            ? "✅ 该会话已完成摘要"
-                                            : "⚠️ 该会话尚未摘要或不存在"}
+                                    <div className={`mt-2 ${isSummarized ? "text-success" : "text-warning"}`}>
+                                        {isSummarized ? "✅ 该会话已完成摘要" : "⚠️ 该会话尚未摘要或不存在"}
                                     </div>
                                 )}
                             </CardHeader>
@@ -167,15 +159,10 @@ export default function AIDigestPage() {
                                         <TableBody emptyContent={"未找到相关摘要结果"}>
                                             {sessionDigestList.items.map(digest => (
                                                 <TableRow key={digest.topicId}>
-                                                    <TableCell className="font-semibold">
-                                                        {digest.topic}
-                                                    </TableCell>
+                                                    <TableCell className="font-semibold">{digest.topic}</TableCell>
                                                     <TableCell>{digest.contributors}</TableCell>
                                                     <TableCell>
-                                                        <div
-                                                            className="max-w-md truncate"
-                                                            title={digest.detail}
-                                                        >
+                                                        <div className="max-w-md truncate" title={digest.detail}>
                                                             {digest.detail}
                                                         </div>
                                                     </TableCell>
@@ -191,7 +178,7 @@ export default function AIDigestPage() {
                     <Tab key="topic" title="按主题查询">
                         <Card className="mt-4">
                             <CardHeader>
-                                <div className="flex flex-col md:flex-row gap-4 items-end">
+                                <div className="flex flex-col md:flex-row gap-4 items-end w-full">
                                     <div className="flex-1 w-full">
                                         <Input
                                             label="主题ID"
@@ -219,23 +206,17 @@ export default function AIDigestPage() {
                                     </div>
                                 ) : topicDigest ? (
                                     <Accordion selectionMode="multiple">
-                                        <AccordionItem
-                                            key="1"
-                                            aria-label="主题信息"
-                                            title="主题信息"
-                                        >
+                                        <AccordionItem key="1" aria-label="主题信息" title="主题信息">
                                             <div className="flex flex-col gap-2">
                                                 <div>
-                                                    <span className="font-semibold">主题ID:</span>{" "}
-                                                    {topicDigest.topicId}
+                                                    <span className="font-semibold">主题ID:</span> {topicDigest.topicId}
                                                 </div>
                                                 <div>
                                                     <span className="font-semibold">会话ID:</span>{" "}
                                                     {topicDigest.sessionId}
                                                 </div>
                                                 <div>
-                                                    <span className="font-semibold">主题:</span>{" "}
-                                                    {topicDigest.topic}
+                                                    <span className="font-semibold">主题:</span> {topicDigest.topic}
                                                 </div>
                                                 <div>
                                                     <span className="font-semibold">参与者:</span>{" "}
@@ -243,11 +224,7 @@ export default function AIDigestPage() {
                                                 </div>
                                             </div>
                                         </AccordionItem>
-                                        <AccordionItem
-                                            key="2"
-                                            aria-label="摘要详情"
-                                            title="摘要详情"
-                                        >
+                                        <AccordionItem key="2" aria-label="摘要详情" title="摘要详情">
                                             <p>{topicDigest.detail}</p>
                                         </AccordionItem>
                                     </Accordion>
@@ -256,9 +233,7 @@ export default function AIDigestPage() {
                                         未找到ID为 {topicId} 的主题摘要
                                     </div>
                                 ) : (
-                                    <div className="text-center text-default-500 py-8">
-                                        请输入主题ID进行查询
-                                    </div>
+                                    <div className="text-center text-default-500 py-8">请输入主题ID进行查询</div>
                                 )}
                             </CardBody>
                         </Card>

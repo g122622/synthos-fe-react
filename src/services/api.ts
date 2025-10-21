@@ -17,10 +17,9 @@ interface ErrorResponse extends BaseResponse {
 type ApiResponse<T> = SuccessResponse<T> | ErrorResponse;
 
 // 健康检查接口
-export const healthCheck = async (): Promise<
-    ApiResponse<{ message: string; timestamp: string }>
-> => {
+export const healthCheck = async (): Promise<ApiResponse<{ message: string; timestamp: string }>> => {
     const response = await fetch(`${API_BASE_URL}/health`);
+
     return response.json();
 };
 
@@ -38,6 +37,7 @@ interface GroupDetailsResponse {
 
 export const getGroupDetails = async (): Promise<ApiResponse<GroupDetailsResponse>> => {
     const response = await fetch(`${API_BASE_URL}/api/group-details`);
+
     return response.json();
 };
 
@@ -69,6 +69,7 @@ export const getChatMessagesByGroupId = async (
     });
 
     const response = await fetch(`${API_BASE_URL}/api/chat-messages-by-group-id?${params}`);
+
     return response.json();
 };
 
@@ -85,11 +86,10 @@ interface AIDigestResultResponse extends AIDigestResult {}
 
 interface AIDigestResultsResponse extends Array<AIDigestResult> {}
 
-export const getAIDigestResultByTopicId = async (
-    topicId: string
-): Promise<ApiResponse<AIDigestResultResponse>> => {
+export const getAIDigestResultByTopicId = async (topicId: string): Promise<ApiResponse<AIDigestResultResponse>> => {
     const params = new URLSearchParams({ topicId });
     const response = await fetch(`${API_BASE_URL}/api/ai-digest-result-by-topic-id?${params}`);
+
     return response.json();
 };
 
@@ -98,14 +98,14 @@ export const getAIDigestResultsBySessionId = async (
 ): Promise<ApiResponse<AIDigestResultsResponse>> => {
     const params = new URLSearchParams({ sessionId });
     const response = await fetch(`${API_BASE_URL}/api/ai-digest-results-by-session-id?${params}`);
+
     return response.json();
 };
 
-export const isSessionSummarized = async (
-    sessionId: string
-): Promise<ApiResponse<{ isSummarized: boolean }>> => {
+export const isSessionSummarized = async (sessionId: string): Promise<ApiResponse<{ isSummarized: boolean }>> => {
     const params = new URLSearchParams({ sessionId });
     const response = await fetch(`${API_BASE_URL}/api/is-session-summarized?${params}`);
+
     return response.json();
 };
 
@@ -117,5 +117,6 @@ interface QQAvatarResponse {
 export const getQQAvatar = async (qqNumber: string): Promise<ApiResponse<QQAvatarResponse>> => {
     const params = new URLSearchParams({ qqNumber });
     const response = await fetch(`${API_BASE_URL}/api/qq-avatar?${params}`);
+
     return response.json();
 };
