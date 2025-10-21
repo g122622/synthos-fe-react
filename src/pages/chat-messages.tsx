@@ -20,10 +20,10 @@ export default function ChatMessagesPage() {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [currentPage, setCurrentPage] = useState<number>(1);
     const pageSize = 10;
-
-    // 设置默认日期范围为最近7天
-    const todayDate = today(getLocalTimeZone());
-    const sevenDaysAgo = todayDate.subtract({ days: 7 });
+    const [dateRange, setDateRange] = useState({
+        start: today(getLocalTimeZone()).subtract({ days: 7 }),
+        end: today(getLocalTimeZone())
+    });
 
     // 获取群组信息
     useEffect(() => {
@@ -50,7 +50,7 @@ export default function ChatMessagesPage() {
 
     // 获取聊天记录
     const list = useAsyncList<ChatMessage>({
-        async load({ signal, cursor }) {
+        async load({}) {
             if (!selectedGroup) {
                 return {
                     items: []
@@ -58,10 +58,8 @@ export default function ChatMessagesPage() {
             }
 
             // 获取DateRangePicker的值
-            const dateRangePicker = document.querySelector('[data-testid="date-range-picker"]');
-            // 如果无法直接获取值，我们使用默认的7天范围
-            const startDate = Date.now() - 7 * 24 * 60 * 60 * 1000;
-            const endDate = Date.now();
+            const startDate = dateRange.start.toDate(getLocalTimeZone()).getTime();
+            const endDate = dateRange.end.toDate(getLocalTimeZone()).getTime();
 
             setIsLoading(true);
             try {
@@ -96,7 +94,7 @@ export default function ChatMessagesPage() {
         if (selectedGroup) {
             list.reload();
         }
-    }, [selectedGroup]);
+    }, [selectedGroup, dateRange]);
 
     // 格式化时间戳
     const formatTimestamp = (timestamp: number) => {
@@ -107,7 +105,7 @@ export default function ChatMessagesPage() {
         <DefaultLayout>
             <section className="flex flex-col gap-4 py-8 md:py-10">
                 <div className="flex flex-col items-center justify-center gap-4">
-                    <h1 className={title()}>聊天记录</h1>
+                    <h1 className={title()}>聊天记录管理</h1>
                     <p className="text-default-600 max-w-2xl text-center">
                         查看和筛选QQ群聊天记录，支持按时间范围和群组进行过滤
                     </p>
@@ -115,7 +113,7 @@ export default function ChatMessagesPage() {
 
                 <Card className="mt-6">
                     <CardHeader>
-                        <div className="flex flex-col md:flex-row gap-4 items-center justify-start w-full">
+                        <div className="flex flex-col md:flex-row gap-4 items-center justify-start w-full pl-3 pr-3">
                             <div className="flex-1 w-full">
                                 <Select
                                     className="max-w-xs"
@@ -131,7 +129,7 @@ export default function ChatMessagesPage() {
                                     }}
                                 >
                                     {Object.keys(groups).map(groupId => (
-                                        <SelectItem key={groupId} value={groupId}>
+                                        <SelectItem key={groupId}>
                                             {groupId} - {groups[groupId].groupIntroduction}
                                         </SelectItem>
                                     ))}
@@ -141,15 +139,14 @@ export default function ChatMessagesPage() {
                             <div className="flex-1 w-full">
                                 <DateRangePicker
                                     className="max-w-xs"
-                                    defaultValue={{
-                                        start: sevenDaysAgo,
-                                        end: todayDate
-                                    }}
-                                    label="选择时间范围"
+                                    value={dateRange}
+                                    label="筛选时间范围"
                                     onChange={range => {
                                         if (range) {
-                                            // 重新加载数据
-                                            list.reload();
+                                            setDateRange({
+                                                start: range.start,
+                                                end: range.end
+                                            });
                                         }
                                     }}
                                 />

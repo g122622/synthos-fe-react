@@ -73,6 +73,33 @@ export const getChatMessagesByGroupId = async (
     return response.json();
 };
 
+export const getSessionIdsByGroupIdAndTimeRange = async (
+    groupId: string,
+    timeStart: number,
+    timeEnd: number
+): Promise<ApiResponse<string[]>> => {
+    const params = new URLSearchParams({
+        groupId,
+        timeStart: timeStart.toString(),
+        timeEnd: timeEnd.toString()
+    });
+
+    const response = await fetch(`${API_BASE_URL}/api/session-ids-by-group-id-and-time-range?${params}`);
+
+    return response.json();
+};
+
+export const getSessionTimeDuration = async (
+    sessionId: string
+): Promise<ApiResponse<{ timeStart: number; timeEnd: number }>> => {
+    const params = new URLSearchParams({
+        sessionId
+    });
+    const response = await fetch(`${API_BASE_URL}/api/session-time-duration?${params}`);
+
+    return response.json();
+};
+
 // AI摘要相关接口
 interface AIDigestResult {
     topicId: string;
