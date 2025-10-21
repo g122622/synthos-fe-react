@@ -27,6 +27,79 @@ interface TopicItem {
     timeEnd: number;
 }
 
+// 创建一个函数来解析contributors字符串为数组
+const parseContributors = (contributorsStr: string): string[] => {
+    try {
+        const parsed = JSON.parse(contributorsStr);
+
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+        console.error("解析参与者失败:", error);
+
+        return [];
+    }
+};
+
+// 创建一个函数为每个参与者生成专属颜色
+const generateColorFromName = (name: string, shouldContainAlpha: boolean = true): string => {
+    let hash = 0;
+
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    // 将哈希值转换为HSL颜色值，增加透明度(0.7)
+    const hue = Math.abs(hash % 360);
+
+    if (!shouldContainAlpha) {
+        return `hsl(${hue}, 70%, 40%)`;
+    }
+
+    return `hsla(${hue}, 70%, 40%, 0.1)`;
+};
+
+// 创建一个组件来渲染带有高亮的详情文本
+const HighlightedDetail: React.FC<{ detail: string; contributors: string[] }> = ({ detail, contributors }) => {
+    // 创建正则表达式来匹配所有参与者名称
+    const highlightText = (text: string, names: string[]): React.ReactNode[] => {
+        if (names.length === 0) {
+            return [text];
+        }
+
+        // 转义特殊字符并创建正则表达式
+        const escapedNames = names.map(name => name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+        const regex = new RegExp(`(${escapedNames.join("|")})`, "g");
+        const parts = text.split(regex);
+
+        return parts.map((part, index) => {
+            // 检查这个部分是否是参与者名称
+            const contributorIndex = names.indexOf(part);
+
+            if (contributorIndex !== -1) {
+                return (
+                    <Chip
+                        key={index}
+                        className="mx-1"
+                        size="sm"
+                        style={{
+                            backgroundColor: generateColorFromName(part),
+                            color: generateColorFromName(part, false),
+                            fontWeight: "bold"
+                        }}
+                        variant="flat"
+                    >
+                        {part}
+                    </Chip>
+                );
+            }
+
+            return part;
+        });
+    };
+
+    return <p className="text-default-700 mb-3">{highlightText(detail, contributors)}</p>;
+};
+
 export default function LatestTopicsPage() {
     const [topics, setTopics] = useState<TopicItem[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
@@ -185,51 +258,59 @@ export default function LatestTopicsPage() {
                             <div className="flex flex-col gap-4">
                                 <ScrollShadow className="max-h-[600px]">
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-5">
-                                        {currentTopics.map((topic, index) => (
-                                            <Card
-                                                key={`${topic.topicId}-${index}`}
-                                                className="border border-default-200"
-                                            >
-                                                <CardHeader className="flex flex-col gap-2">
-                                                    <div className="flex justify-between items-start">
-                                                        <h3 className="text-lg font-bold">{topic.topic}</h3>
-                                                    </div>
-                                                    <p className="text-default-500 text-sm">
-                                                        <Chip className="mr-1" size="sm" variant="flat">
-                                                            {new Date(topic.timeStart).toLocaleDateString("zh-CN", {
-                                                                month: "short",
-                                                                day: "numeric",
-                                                                hour: "2-digit",
-                                                                minute: "2-digit"
-                                                            })}
-                                                        </Chip>
-                                                        to
-                                                        <Chip className="ml-1" size="sm" variant="flat">
-                                                            {new Date(topic.timeEnd).toLocaleDateString("zh-CN", {
-                                                                month: "short",
-                                                                day: "numeric",
-                                                                hour: "2-digit",
-                                                                minute: "2-digit"
-                                                            })}
-                                                        </Chip>
-                                                    </p>
-                                                </CardHeader>
-                                                <CardBody>
-                                                    <p className="text-default-700 mb-3">{topic.detail}</p>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        <Chip size="sm" variant="flat">
-                                                            参与者: {topic.contributors}
-                                                        </Chip>
-                                                        <Chip color="primary" size="sm" variant="flat">
-                                                            ID: {topic.topicId.slice(0, 8)}...
-                                                        </Chip>
-                                                        <Chip size="sm" variant="flat">
-                                                            会话ID: {topic.sessionId}
-                                                        </Chip>
-                                                    </div>
-                                                </CardBody>
-                                            </Card>
-                                        ))}
+                                        {currentTopics.map((topic, index) => {
+                                            // 解析参与者
+                                            const contributorsArray = parseContributors(topic.contributors);
+
+                                            return (
+                                                <Card
+                                                    key={`${topic.topicId}-${index}`}
+                                                    className="border border-default-200"
+                                                >
+                                                    <CardHeader className="flex flex-col gap-2">
+                                                        <div className="flex justify-between items-start">
+                                                            <h3 className="text-lg font-bold">{topic.topic}</h3>
+                                                        </div>
+                                                        <p className="text-default-500 text-sm">
+                                                            <Chip className="mr-1" size="sm" variant="flat">
+                                                                {new Date(topic.timeStart).toLocaleDateString("zh-CN", {
+                                                                    month: "short",
+                                                                    day: "numeric",
+                                                                    hour: "2-digit",
+                                                                    minute: "2-digit"
+                                                                })}
+                                                            </Chip>
+                                                            to
+                                                            <Chip className="ml-1" size="sm" variant="flat">
+                                                                {new Date(topic.timeEnd).toLocaleDateString("zh-CN", {
+                                                                    month: "short",
+                                                                    day: "numeric",
+                                                                    hour: "2-digit",
+                                                                    minute: "2-digit"
+                                                                })}
+                                                            </Chip>
+                                                        </p>
+                                                    </CardHeader>
+                                                    <CardBody>
+                                                        <HighlightedDetail
+                                                            contributors={contributorsArray}
+                                                            detail={topic.detail}
+                                                        />
+                                                        <div className="flex flex-wrap gap-2">
+                                                            <Chip size="sm" variant="flat">
+                                                                参与者: {contributorsArray.join(", ")}
+                                                            </Chip>
+                                                            <Chip color="primary" size="sm" variant="flat">
+                                                                ID: {topic.topicId.slice(0, 8)}...
+                                                            </Chip>
+                                                            <Chip size="sm" variant="flat">
+                                                                会话ID: {topic.sessionId}
+                                                            </Chip>
+                                                        </div>
+                                                    </CardBody>
+                                                </Card>
+                                            );
+                                        })}
                                     </div>
                                 </ScrollShadow>
 
