@@ -17,6 +17,10 @@ export const siteConfig = {
             href: "/ai-digest"
         },
         {
+            label: "最新话题",
+            href: "/latest-topics"
+        },
+        {
             label: "群组管理",
             href: "/groups"
         }
@@ -33,6 +37,10 @@ export const siteConfig = {
         {
             label: "摘要结果",
             href: "/ai-digest"
+        },
+        {
+            label: "最新话题",
+            href: "/latest-topics"
         },
         {
             label: "群组管理",
