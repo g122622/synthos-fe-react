@@ -5,14 +5,23 @@ import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from 
 import { Chip } from "@heroui/chip";
 import { Spinner } from "@heroui/spinner";
 
-import { getGroupDetails } from "@/services/api";
+import { getGroupDetails, getChatMessagesByGroupId } from "@/services/api";
 import { GroupDetailsRecord } from "@/types/app";
 import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
 
 export default function GroupsPage() {
     const [groups, setGroups] = useState<GroupDetailsRecord>({});
+    const [recentMessageCounts, setRecentMessageCounts] = useState<Record<string, number>>({});
     const [isLoading, setIsLoading] = useState<boolean>(false);
+
+    // 获取最近24小时的时间戳
+    const getRecent24HoursTimestamps = () => {
+        const now = new Date().getTime();
+        const twentyFourHoursAgo = now - 24 * 60 * 60 * 1000;
+
+        return { startTime: twentyFourHoursAgo, endTime: now };
+    };
 
     // 获取群组信息
     useEffect(() => {
@@ -21,17 +30,42 @@ export default function GroupsPage() {
             try {
                 const response = await getGroupDetails();
 
-                setIsLoading(false);
-
                 if (response.success) {
                     setGroups(response.data);
+                    // 获取每个群组的最近24小时消息量
+                    await fetchRecentMessageCounts(response.data);
                 } else {
                     console.error("获取群组信息失败:", response.message);
                 }
             } catch (error) {
-                setIsLoading(false);
                 console.error("获取群组信息失败:", error);
+            } finally {
+                setIsLoading(false);
             }
+        };
+
+        const fetchRecentMessageCounts = async (groupsData: GroupDetailsRecord) => {
+            const { startTime, endTime } = getRecent24HoursTimestamps();
+            const counts: Record<string, number> = {};
+
+            // 并行获取所有群组的最近24小时消息量
+            const promises = Object.keys(groupsData).map(async groupId => {
+                try {
+                    const response = await getChatMessagesByGroupId(groupId, startTime, endTime);
+
+                    if (response.success) {
+                        counts[groupId] = response.data.length;
+                    } else {
+                        counts[groupId] = 0;
+                    }
+                } catch (error) {
+                    console.error(`获取群组 ${groupId} 的最近24小时消息量失败:`, error);
+                    counts[groupId] = 0;
+                }
+            });
+
+            await Promise.all(promises);
+            setRecentMessageCounts(counts);
         };
 
         fetchGroups();
@@ -110,6 +144,7 @@ export default function GroupsPage() {
                                     <TableColumn>群介绍</TableColumn>
                                     <TableColumn>分组策略</TableColumn>
                                     <TableColumn>AI模型</TableColumn>
+                                    <TableColumn>最近24小时消息量</TableColumn>
                                 </TableHeader>
                                 <TableBody emptyContent={"未找到群组信息"}>
                                     {Object.entries(groups).map(([groupId, groupDetail]) => (
@@ -133,6 +168,15 @@ export default function GroupsPage() {
                                                 </Chip>
                                             </TableCell>
                                             <TableCell>{getAIModelLabel(groupDetail.aiModel)}</TableCell>
+                                            <TableCell>
+                                                {recentMessageCounts[groupId] !== undefined ? (
+                                                    <span className="font-semibold">
+                                                        {recentMessageCounts[groupId]}
+                                                    </span>
+                                                ) : (
+                                                    <Spinner size="sm" />
+                                                )}
+                                            </TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>

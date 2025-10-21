@@ -5,45 +5,45 @@ export const siteConfig = {
     description: "QQ聊天记录全链路总结功能",
     navItems: [
         {
-            label: "首页",
+            label: "🏠首页",
             href: "/"
         },
         {
-            label: "聊天记录",
+            label: "💬聊天记录",
             href: "/chat-messages"
         },
         {
-            label: "摘要结果",
+            label: "🤖摘要结果",
             href: "/ai-digest"
         },
         {
-            label: "最新话题",
+            label: "🔥最新话题",
             href: "/latest-topics"
         },
         {
-            label: "群组管理",
+            label: "⚙️群组管理",
             href: "/groups"
         }
     ],
     navMenuItems: [
         {
-            label: "首页",
+            label: "🏠首页",
             href: "/"
         },
         {
-            label: "聊天记录",
+            label: "💬聊天记录",
             href: "/chat-messages"
         },
         {
-            label: "摘要结果",
+            label: "🤖摘要结果",
             href: "/ai-digest"
         },
         {
-            label: "最新话题",
+            label: "🔥最新话题",
             href: "/latest-topics"
         },
         {
-            label: "群组管理",
+            label: "⚙️群组管理",
             href: "/groups"
         }
     ],
