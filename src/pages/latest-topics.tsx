@@ -5,6 +5,8 @@ import { Pagination } from "@heroui/pagination";
 import { Spinner } from "@heroui/spinner";
 import { Chip } from "@heroui/chip";
 import { ScrollShadow } from "@heroui/scroll-shadow";
+import { DateRangePicker } from "@heroui/react";
+import { today, getLocalTimeZone } from "@internationalized/date";
 
 import {
     getGroupDetails,
@@ -21,8 +23,8 @@ interface TopicItem {
     topic: string;
     contributors: string;
     detail: string;
-    timeStart: string;
-    timeEnd: number; // 用于排序
+    timeStart: number; // 改为 number 以统一时间戳
+    timeEnd: number;
 }
 
 export default function LatestTopicsPage() {
@@ -31,11 +33,16 @@ export default function LatestTopicsPage() {
     const [page, setPage] = useState<number>(1);
     const topicsPerPage = 10;
 
-    // 获取最新话题数据
-    const fetchLatestTopics = async () => {
+    // 默认时间范围：最近7天
+    const [dateRange, setDateRange] = useState({
+        start: today(getLocalTimeZone()).subtract({ days: 7 }),
+        end: today(getLocalTimeZone())
+    });
+
+    // 获取最新话题数据（带时间范围）
+    const fetchLatestTopics = async (start: Date, end: Date) => {
         setLoading(true);
         try {
-            // 1. 获取所有群组
             const groupResponse = await getGroupDetails();
 
             if (!groupResponse.success) {
@@ -46,14 +53,14 @@ export default function LatestTopicsPage() {
             }
 
             const groupIds = Object.keys(groupResponse.data);
-            const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000; // 一周前的时间戳
+            const startTime = start.getTime();
+            const endTime = end.getTime();
 
-            // 2. 对所有群组调用getSessionIdsByGroupIdAndTimeRange获取sessionId
             let allSessionIds: string[] = [];
 
             for (const groupId of groupIds) {
                 try {
-                    const sessionResponse = await getSessionIdsByGroupIdAndTimeRange(groupId, oneWeekAgo, Date.now());
+                    const sessionResponse = await getSessionIdsByGroupIdAndTimeRange(groupId, startTime, endTime);
 
                     if (sessionResponse.success) {
                         allSessionIds = [...allSessionIds, ...sessionResponse.data];
@@ -63,7 +70,6 @@ export default function LatestTopicsPage() {
                 }
             }
 
-            // 3. 使用getSessionTimeDuration按照结束时间进行排名
             const sessionWithDuration: { sessionId: string; timeStart: number; timeEnd: number }[] = [];
 
             for (const sessionId of allSessionIds) {
@@ -82,18 +88,18 @@ export default function LatestTopicsPage() {
                 }
             }
 
-            // 按结束时间降序排序
             sessionWithDuration.sort((a, b) => b.timeEnd - a.timeEnd);
 
-            // 4. 使用getAIDigestResultsBySessionId获取AI摘要结果
             const allTopics: TopicItem[] = [];
 
             for (const { sessionId, timeStart, timeEnd } of sessionWithDuration) {
+                // 跳过不在当前筛选时间范围内的会话（可选，根据业务需求）
+                if (timeEnd < startTime || timeStart > endTime) continue;
+
                 try {
                     const digestResponse = await getAIDigestResultsBySessionId(sessionId);
 
                     if (digestResponse.success) {
-                        // 为每个摘要结果添加时间信息
                         const topicsWithTime = digestResponse.data.map(topic => ({
                             ...topic,
                             timeStart,
@@ -115,9 +121,13 @@ export default function LatestTopicsPage() {
         }
     };
 
+    // 初始加载 + 日期变化时重新加载
     useEffect(() => {
-        fetchLatestTopics();
-    }, []);
+        const start = dateRange.start.toDate(getLocalTimeZone());
+        const end = dateRange.end.toDate(getLocalTimeZone());
+
+        fetchLatestTopics(start, end);
+    }, [dateRange]);
 
     // 分页处理
     const totalPages = Math.ceil(topics.length / topicsPerPage);
@@ -132,12 +142,40 @@ export default function LatestTopicsPage() {
                 </div>
 
                 <Card className="mt-6">
-                    <CardHeader className="flex flex-row justify-between items-center p-5">
+                    <CardHeader className="flex flex-col md:flex-row justify-between items-center pl-7 pr-7 gap-4">
                         <h2 className="text-xl font-bold">话题列表</h2>
-                        <Button color="primary" isLoading={loading} variant="flat" onPress={fetchLatestTopics}>
-                            {"刷新"}
-                        </Button>
+
+                        {/* 日期选择器 + 刷新按钮 */}
+                        <div className="flex gap-3 items-center">
+                            <DateRangePicker
+                                className="max-w-xs"
+                                label="时间范围"
+                                value={dateRange}
+                                onChange={range => {
+                                    if (range) {
+                                        setDateRange({
+                                            start: range.start,
+                                            end: range.end
+                                        });
+                                    }
+                                }}
+                            />
+                            <Button
+                                color="primary"
+                                isLoading={loading}
+                                variant="flat"
+                                onPress={() => {
+                                    const start = dateRange.start.toDate(getLocalTimeZone());
+                                    const end = dateRange.end.toDate(getLocalTimeZone());
+
+                                    fetchLatestTopics(start, end);
+                                }}
+                            >
+                                刷新
+                            </Button>
+                        </div>
                     </CardHeader>
+
                     <CardBody>
                         {loading ? (
                             <div className="flex justify-center items-center h-64">
@@ -146,7 +184,7 @@ export default function LatestTopicsPage() {
                         ) : currentTopics.length > 0 ? (
                             <div className="flex flex-col gap-4">
                                 <ScrollShadow className="max-h-[600px]">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-5">
                                         {currentTopics.map((topic, index) => (
                                             <Card
                                                 key={`${topic.topicId}-${index}`}
@@ -157,7 +195,7 @@ export default function LatestTopicsPage() {
                                                         <h3 className="text-lg font-bold">{topic.topic}</h3>
                                                     </div>
                                                     <p className="text-default-500 text-sm">
-                                                        <Chip size="sm" variant="flat" className="mr-1">
+                                                        <Chip className="mr-1" size="sm" variant="flat">
                                                             {new Date(topic.timeStart).toLocaleDateString("zh-CN", {
                                                                 month: "short",
                                                                 day: "numeric",
@@ -166,7 +204,7 @@ export default function LatestTopicsPage() {
                                                             })}
                                                         </Chip>
                                                         to
-                                                        <Chip size="sm" variant="flat" className="ml-1">
+                                                        <Chip className="ml-1" size="sm" variant="flat">
                                                             {new Date(topic.timeEnd).toLocaleDateString("zh-CN", {
                                                                 month: "short",
                                                                 day: "numeric",
@@ -200,7 +238,6 @@ export default function LatestTopicsPage() {
                                         <Pagination
                                             showControls
                                             color="primary"
-                                            initialPage={1}
                                             page={page}
                                             size="md"
                                             total={totalPages}
@@ -212,7 +249,17 @@ export default function LatestTopicsPage() {
                         ) : (
                             <div className="text-center py-12">
                                 <p className="text-default-500">暂无话题数据</p>
-                                <Button className="mt-4" color="primary" variant="light" onPress={fetchLatestTopics}>
+                                <Button
+                                    className="mt-4"
+                                    color="primary"
+                                    variant="light"
+                                    onPress={() => {
+                                        const start = dateRange.start.toDate(getLocalTimeZone());
+                                        const end = dateRange.end.toDate(getLocalTimeZone());
+
+                                        fetchLatestTopics(start, end);
+                                    }}
+                                >
                                     重新加载
                                 </Button>
                             </div>
