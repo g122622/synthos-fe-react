@@ -332,8 +332,19 @@ export default function LatestTopicsPage() {
                                                             contributors={contributorsArray}
                                                             detail={topic.detail}
                                                         />
-                                                        {/* 在左下角添加群ID的Chip */}
-                                                        <div className="absolute bottom-3 left-3">
+                                                        {/* 在左下角添加群ID的Chip和群头像 */}
+                                                        <div className="absolute bottom-3 left-3 flex items-center gap-2">
+                                                            <img
+                                                                src={`http://p.qlogo.cn/gh/${topic.groupId}/${topic.groupId}/0`}
+                                                                alt="群头像"
+                                                                className="w-6 h-6 rounded-full"
+                                                                onError={e => {
+                                                                    const target = e.target as HTMLImageElement;
+                                                                    target.onerror = null;
+                                                                    target.src =
+                                                                        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
+                                                                }}
+                                                            />
                                                             <Chip size="sm" variant="flat">
                                                                 群ID: {topic.groupId}
                                                             </Chip>
