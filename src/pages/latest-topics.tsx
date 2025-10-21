@@ -259,7 +259,7 @@ export default function LatestTopicsPage() {
                             </div>
                         ) : currentTopics.length > 0 ? (
                             <div className="flex flex-col gap-4">
-                                <ScrollShadow className="max-h-[600px]">
+                                <ScrollShadow className="max-h-[900px]">
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-5">
                                         {currentTopics.map((topic, index) => {
                                             // 解析参与者
@@ -276,6 +276,7 @@ export default function LatestTopicsPage() {
                                                         </div>
                                                         <p className="text-default-500 text-sm">
                                                             <Chip className="mr-1" size="sm" variant="flat">
+                                                                🕗
                                                                 {new Date(topic.timeStart).toLocaleDateString("zh-CN", {
                                                                     month: "short",
                                                                     day: "numeric",
@@ -283,8 +284,9 @@ export default function LatestTopicsPage() {
                                                                     minute: "2-digit"
                                                                 })}
                                                             </Chip>
-                                                            to
+                                                            ➡️
                                                             <Chip className="ml-1" size="sm" variant="flat">
+                                                                🕗
                                                                 {new Date(topic.timeEnd).toLocaleDateString("zh-CN", {
                                                                     month: "short",
                                                                     day: "numeric",
