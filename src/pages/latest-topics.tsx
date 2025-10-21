@@ -10,6 +10,7 @@ import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@heroui/d
 import { Button as HeroUIButton } from "@heroui/button";
 import { MoreVertical } from "lucide-react";
 import { today, getLocalTimeZone } from "@internationalized/date";
+import { Slider } from "@heroui/slider"; // 引入Slider组件
 
 import {
     getGroupDetails,
@@ -100,14 +101,14 @@ const HighlightedDetail: React.FC<{ detail: string; contributors: string[] }> = 
         });
     };
 
-    return <p className="text-default-700 mb-3">{highlightText(detail, contributors)}</p>;
+    return <div className="text-default-700 mb-3">{highlightText(detail, contributors)}</div>;
 };
 
 export default function LatestTopicsPage() {
     const [topics, setTopics] = useState<TopicItem[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [page, setPage] = useState<number>(1);
-    const topicsPerPage = 6;
+    const [topicsPerPage, setTopicsPerPage] = useState<number>(9); // 将topicsPerPage改为状态
 
     // 默认时间范围：最近7天
     const [dateRange, setDateRange] = useState({
@@ -221,34 +222,55 @@ export default function LatestTopicsPage() {
                     <CardHeader className="flex flex-col md:flex-row justify-between items-center pl-7 pr-7 gap-4">
                         <h2 className="text-xl font-bold">话题列表</h2>
 
-                        {/* 日期选择器 + 刷新按钮 */}
-                        <div className="flex gap-3 items-center">
-                            <DateRangePicker
-                                className="max-w-xs"
-                                label="时间范围"
-                                value={dateRange}
-                                onChange={range => {
-                                    if (range) {
-                                        setDateRange({
-                                            start: range.start,
-                                            end: range.end
-                                        });
-                                    }
-                                }}
-                            />
-                            <Button
-                                color="primary"
-                                isLoading={loading}
-                                variant="flat"
-                                onPress={() => {
-                                    const start = dateRange.start.toDate(getLocalTimeZone());
-                                    const end = dateRange.end.toDate(getLocalTimeZone());
+                        {/* 控制每页显示数量的Slider */}
+                        <div className="flex flex-col md:flex-row items-center gap-4">
+                            <div className="flex items-center gap-2">
+                                <div className="text-default-600 text-sm w-30">每页显示:</div>
+                                <Slider
+                                    aria-label="每页显示话题数量"
+                                    className="max-w-[120px]"
+                                    color="primary"
+                                    defaultValue={6}
+                                    maxValue={12}
+                                    minValue={3}
+                                    showTooltip={true}
+                                    size="lg"
+                                    step={3}
+                                    value={topicsPerPage}
+                                    onChange={setTopicsPerPage}
+                                />
+                                <span className="text-default-900 text-sm w-6">{topicsPerPage}</span>
+                            </div>
 
-                                    fetchLatestTopics(start, end);
-                                }}
-                            >
-                                刷新
-                            </Button>
+                            {/* 日期选择器 + 刷新按钮 */}
+                            <div className="flex gap-3 items-center">
+                                <DateRangePicker
+                                    className="max-w-xs"
+                                    label="时间范围"
+                                    value={dateRange}
+                                    onChange={range => {
+                                        if (range) {
+                                            setDateRange({
+                                                start: range.start,
+                                                end: range.end
+                                            });
+                                        }
+                                    }}
+                                />
+                                <Button
+                                    color="primary"
+                                    isLoading={loading}
+                                    variant="flat"
+                                    onPress={() => {
+                                        const start = dateRange.start.toDate(getLocalTimeZone());
+                                        const end = dateRange.end.toDate(getLocalTimeZone());
+
+                                        fetchLatestTopics(start, end);
+                                    }}
+                                >
+                                    刷新
+                                </Button>
+                            </div>
                         </div>
                     </CardHeader>
 
@@ -274,7 +296,7 @@ export default function LatestTopicsPage() {
                                                         <div className="flex justify-between items-start">
                                                             <h3 className="text-lg font-bold">{topic.topic}</h3>
                                                         </div>
-                                                        <p className="text-default-500 text-sm">
+                                                        <div className="text-default-500 text-sm">
                                                             <Chip className="mr-1" size="sm" variant="flat">
                                                                 🕗
                                                                 {new Date(topic.timeStart).toLocaleDateString("zh-CN", {
@@ -294,7 +316,7 @@ export default function LatestTopicsPage() {
                                                                     minute: "2-digit"
                                                                 })}
                                                             </Chip>
-                                                        </p>
+                                                        </div>
                                                     </CardHeader>
                                                     <CardBody className="relative">
                                                         <HighlightedDetail
