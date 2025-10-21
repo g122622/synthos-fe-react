@@ -21,6 +21,7 @@ interface TopicItem {
     topic: string;
     contributors: string;
     detail: string;
+    timeStart: string;
     timeEnd: number; // 用于排序
 }
 
@@ -63,7 +64,7 @@ export default function LatestTopicsPage() {
             }
 
             // 3. 使用getSessionTimeDuration按照结束时间进行排名
-            const sessionWithDuration: { sessionId: string; timeEnd: number }[] = [];
+            const sessionWithDuration: { sessionId: string; timeStart: number; timeEnd: number }[] = [];
 
             for (const sessionId of allSessionIds) {
                 try {
@@ -72,6 +73,7 @@ export default function LatestTopicsPage() {
                     if (timeResponse.success) {
                         sessionWithDuration.push({
                             sessionId,
+                            timeStart: timeResponse.data.timeStart,
                             timeEnd: timeResponse.data.timeEnd
                         });
                     }
@@ -86,7 +88,7 @@ export default function LatestTopicsPage() {
             // 4. 使用getAIDigestResultsBySessionId获取AI摘要结果
             const allTopics: TopicItem[] = [];
 
-            for (const { sessionId, timeEnd } of sessionWithDuration) {
+            for (const { sessionId, timeStart, timeEnd } of sessionWithDuration) {
                 try {
                     const digestResponse = await getAIDigestResultsBySessionId(sessionId);
 
@@ -94,6 +96,7 @@ export default function LatestTopicsPage() {
                         // 为每个摘要结果添加时间信息
                         const topicsWithTime = digestResponse.data.map(topic => ({
                             ...topic,
+                            timeStart,
                             timeEnd
                         }));
 
@@ -129,10 +132,10 @@ export default function LatestTopicsPage() {
                 </div>
 
                 <Card className="mt-6">
-                    <CardHeader className="flex flex-row justify-between items-center">
+                    <CardHeader className="flex flex-row justify-between items-center p-5">
                         <h2 className="text-xl font-bold">话题列表</h2>
                         <Button color="primary" isLoading={loading} variant="flat" onPress={fetchLatestTopics}>
-                            {loading ? <Spinner size="sm" /> : "刷新"}
+                            {"刷新"}
                         </Button>
                     </CardHeader>
                     <CardBody>
@@ -152,6 +155,14 @@ export default function LatestTopicsPage() {
                                                 <CardHeader className="flex flex-col gap-2">
                                                     <div className="flex justify-between items-start">
                                                         <h3 className="text-lg font-bold">{topic.topic}</h3>
+                                                        <Chip size="sm" variant="flat">
+                                                            {new Date(topic.timeStart).toLocaleDateString("zh-CN", {
+                                                                month: "short",
+                                                                day: "numeric",
+                                                                hour: "2-digit",
+                                                                minute: "2-digit"
+                                                            })}
+                                                        </Chip>
                                                         <Chip size="sm" variant="flat">
                                                             {new Date(topic.timeEnd).toLocaleDateString("zh-CN", {
                                                                 month: "short",
