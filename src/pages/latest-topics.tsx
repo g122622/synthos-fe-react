@@ -6,6 +6,9 @@ import { Spinner } from "@heroui/spinner";
 import { Chip } from "@heroui/chip";
 import { ScrollShadow } from "@heroui/scroll-shadow";
 import { DateRangePicker } from "@heroui/react";
+import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@heroui/dropdown";
+import { Button as HeroUIButton } from "@heroui/button";
+import { MoreVertical } from "lucide-react";
 import { today, getLocalTimeZone } from "@internationalized/date";
 
 import {
@@ -104,7 +107,7 @@ export default function LatestTopicsPage() {
     const [topics, setTopics] = useState<TopicItem[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [page, setPage] = useState<number>(1);
-    const topicsPerPage = 10;
+    const topicsPerPage = 6;
 
     // 默认时间范围：最近7天
     const [dateRange, setDateRange] = useState({
@@ -291,21 +294,51 @@ export default function LatestTopicsPage() {
                                                             </Chip>
                                                         </p>
                                                     </CardHeader>
-                                                    <CardBody>
+                                                    <CardBody className="relative">
                                                         <HighlightedDetail
                                                             contributors={contributorsArray}
                                                             detail={topic.detail}
                                                         />
-                                                        <div className="flex flex-wrap gap-2">
-                                                            <Chip size="sm" variant="flat">
-                                                                参与者: {contributorsArray.join(", ")}
-                                                            </Chip>
-                                                            <Chip color="primary" size="sm" variant="flat">
-                                                                ID: {topic.topicId.slice(0, 8)}...
-                                                            </Chip>
-                                                            <Chip size="sm" variant="flat">
-                                                                会话ID: {topic.sessionId}
-                                                            </Chip>
+                                                        <div className="absolute bottom-3 right-3">
+                                                            <Dropdown>
+                                                                <DropdownTrigger>
+                                                                    <HeroUIButton isIconOnly size="sm" variant="light">
+                                                                        <MoreVertical size={16} />
+                                                                    </HeroUIButton>
+                                                                </DropdownTrigger>
+                                                                <DropdownMenu aria-label="更多选项">
+                                                                    <DropdownItem key="participants" textValue="参与者">
+                                                                        <div className="flex flex-col gap-1">
+                                                                            <p className="font-medium">参与者</p>
+                                                                            <div className="flex flex-wrap gap-1">
+                                                                                {contributorsArray.map(
+                                                                                    (contributor, idx) => (
+                                                                                        <Chip
+                                                                                            key={idx}
+                                                                                            size="sm"
+                                                                                            variant="flat"
+                                                                                        >
+                                                                                            {contributor}
+                                                                                        </Chip>
+                                                                                    )
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    </DropdownItem>
+                                                                    <DropdownItem key="topicId" textValue="话题ID">
+                                                                        <div className="flex flex-col gap-1">
+                                                                            <p className="font-medium">话题ID</p>
+                                                                            <p className="text-sm">{topic.topicId}</p>
+                                                                        </div>
+                                                                    </DropdownItem>
+                                                                    <DropdownItem key="sessionId" textValue="会话ID">
+                                                                        <div className="flex flex-col gap-1">
+                                                                            <p className="font-medium">会话ID</p>
+                                                                            <p className="text-sm">{topic.sessionId}</p>
+                                                                        </div>
+                                                                    </DropdownItem>
+                                                                </DropdownMenu>
+                                                            </Dropdown>
                                                         </div>
                                                     </CardBody>
                                                 </Card>
