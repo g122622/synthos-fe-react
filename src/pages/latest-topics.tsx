@@ -65,6 +65,8 @@ const generateColorFromName = (name: string, shouldContainAlpha: boolean = true)
 
 // 创建一个组件来渲染带有高亮的详情文本
 const HighlightedDetail: React.FC<{ detail: string; contributors: string[] }> = ({ detail, contributors }) => {
+    if (!detail) return <div className="text-default-700 mb-3">摘要正文为空，无法加载数据 😭😭😭</div>;
+
     // 创建正则表达式来匹配所有参与者名称
     const highlightText = (text: string, names: string[]): React.ReactNode[] => {
         if (names.length === 0) {
@@ -109,7 +111,7 @@ export default function LatestTopicsPage() {
     const [topics, setTopics] = useState<TopicItem[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [page, setPage] = useState<number>(1);
-    const [topicsPerPage, setTopicsPerPage] = useState<number>(9); // 将topicsPerPage改为状态
+    const [topicsPerPage, setTopicsPerPage] = useState<number>(6); // 将topicsPerPage改为状态
 
     // 默认时间范围：最近7天
     const [dateRange, setDateRange] = useState({
