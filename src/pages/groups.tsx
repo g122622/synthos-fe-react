@@ -246,6 +246,7 @@ export default function GroupsPage() {
                         ) : (
                             <Table aria-label="群组列表">
                                 <TableHeader>
+                                    <TableColumn>群头像</TableColumn>
                                     <TableColumn>群号</TableColumn>
                                     <TableColumn>平台</TableColumn>
                                     <TableColumn>群介绍</TableColumn>
@@ -257,6 +258,19 @@ export default function GroupsPage() {
                                 <TableBody emptyContent={"未找到群组信息"}>
                                     {Object.entries(groups).map(([groupId, groupDetail]) => (
                                         <TableRow key={groupId}>
+                                            <TableCell>
+                                                <img
+                                                    src={`http://p.qlogo.cn/gh/${groupId}/${groupId}/0`}
+                                                    alt="群头像"
+                                                    className="w-10 h-10 rounded-full"
+                                                    onError={e => {
+                                                        const target = e.target as HTMLImageElement;
+                                                        target.onerror = null;
+                                                        target.src =
+                                                            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
+                                                    }}
+                                                />
+                                            </TableCell>
                                             <TableCell className="font-semibold">{groupId}</TableCell>
                                             <TableCell>
                                                 <Chip
