@@ -8,7 +8,7 @@ import { ScrollShadow } from "@heroui/scroll-shadow";
 import { DateRangePicker } from "@heroui/react";
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@heroui/dropdown";
 import { Button as HeroUIButton } from "@heroui/button";
-import { MoreVertical } from "lucide-react";
+import { MoreVertical, Check } from "lucide-react";
 import { today, getLocalTimeZone } from "@internationalized/date";
 import { Slider } from "@heroui/slider"; // 引入Slider组件
 
@@ -112,6 +112,7 @@ export default function LatestTopicsPage() {
     const [loading, setLoading] = useState<boolean>(true);
     const [page, setPage] = useState<number>(1);
     const [topicsPerPage, setTopicsPerPage] = useState<number>(6); // 将topicsPerPage改为状态
+    const [readTopics, setReadTopics] = useState<Record<string, boolean>>({});
 
     // 默认时间范围：最近7天
     const [dateRange, setDateRange] = useState({
@@ -148,6 +149,7 @@ export default function LatestTopicsPage() {
                             sessionId,
                             groupId
                         }));
+
                         allSessionIds = [...allSessionIds, ...sessionsWithGroupId];
                     }
                 } catch (error) {
@@ -220,6 +222,28 @@ export default function LatestTopicsPage() {
     // 分页处理
     const totalPages = Math.ceil(topics.length / topicsPerPage);
     const currentTopics = topics.slice((page - 1) * topicsPerPage, page * topicsPerPage);
+
+    // 初始化已读状态
+    useEffect(() => {
+        const storedReadTopics = localStorage.getItem("readTopics");
+
+        if (storedReadTopics) {
+            try {
+                setReadTopics(JSON.parse(storedReadTopics));
+            } catch (error) {
+                console.error("解析已读状态失败:", error);
+                localStorage.removeItem("readTopics");
+            }
+        }
+    }, []);
+
+    // 标记话题为已读
+    const markAsRead = (topicId: string) => {
+        const newReadTopics = { ...readTopics, [topicId]: true };
+
+        setReadTopics(newReadTopics);
+        localStorage.setItem("readTopics", JSON.stringify(newReadTopics));
+    };
 
     return (
         <DefaultLayout>
@@ -337,11 +361,12 @@ export default function LatestTopicsPage() {
                                                         {/* 在左下角添加群ID的Chip和群头像 */}
                                                         <div className="absolute bottom-3 left-3 flex items-center gap-2">
                                                             <img
-                                                                src={`http://p.qlogo.cn/gh/${topic.groupId}/${topic.groupId}/0`}
                                                                 alt="群头像"
                                                                 className="w-6 h-6 rounded-full"
+                                                                src={`http://p.qlogo.cn/gh/${topic.groupId}/${topic.groupId}/0`}
                                                                 onError={e => {
                                                                     const target = e.target as HTMLImageElement;
+
                                                                     target.onerror = null;
                                                                     target.src =
                                                                         "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
@@ -351,7 +376,8 @@ export default function LatestTopicsPage() {
                                                                 群ID: {topic.groupId}
                                                             </Chip>
                                                         </div>
-                                                        <div className="absolute bottom-3 right-3">
+                                                        {/* 右下角的更多选项和已读按钮 */}
+                                                        <div className="absolute bottom-3 right-3 flex gap-1">
                                                             <Dropdown>
                                                                 <DropdownTrigger>
                                                                     <HeroUIButton isIconOnly size="sm" variant="light">
@@ -368,7 +394,6 @@ export default function LatestTopicsPage() {
                                                                                         <Chip
                                                                                             key={idx}
                                                                                             size="sm"
-                                                                                            variant="flat"
                                                                                             style={{
                                                                                                 backgroundColor:
                                                                                                     generateColorFromName(
@@ -380,6 +405,7 @@ export default function LatestTopicsPage() {
                                                                                                 ),
                                                                                                 fontWeight: "bold"
                                                                                             }}
+                                                                                            variant="flat"
                                                                                         >
                                                                                             {contributor}
                                                                                         </Chip>
@@ -408,6 +434,17 @@ export default function LatestTopicsPage() {
                                                                     </DropdownItem>
                                                                 </DropdownMenu>
                                                             </Dropdown>
+                                                            {!readTopics[topic.topicId] && (
+                                                                <HeroUIButton
+                                                                    isIconOnly
+                                                                    color="primary"
+                                                                    size="sm"
+                                                                    variant="solid"
+                                                                    onPress={() => markAsRead(topic.topicId)}
+                                                                >
+                                                                    <Check size={16} />
+                                                                </HeroUIButton>
+                                                            )}
                                                         </div>
                                                     </CardBody>
                                                 </Card>
