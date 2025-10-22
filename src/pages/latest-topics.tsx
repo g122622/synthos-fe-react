@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Button } from "@heroui/button";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Pagination } from "@heroui/pagination";
@@ -8,7 +8,7 @@ import { ScrollShadow } from "@heroui/scroll-shadow";
 import { DateRangePicker, Tooltip, addToast, Input, Checkbox } from "@heroui/react";
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@heroui/dropdown";
 import { Button as HeroUIButton } from "@heroui/button";
-import { MoreVertical, Check, Copy, Search } from "lucide-react";
+import { MoreVertical, Check, Copy, Search, Star } from "lucide-react";
 import { today, getLocalTimeZone } from "@internationalized/date";
 import { Slider } from "@heroui/slider"; // 引入Slider组件
 
@@ -21,6 +21,7 @@ import {
 import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
 import TopicReadStatusManager from "@/util/TopicReadStatusManager";
+import TopicFavoriteStatusManager from "@/util/TopicFavoriteStatusManager";
 
 interface TopicItem {
     topicId: string;
@@ -114,9 +115,11 @@ export default function LatestTopicsPage() {
     const [page, setPage] = useState<number>(1);
     const [topicsPerPage, setTopicsPerPage] = useState<number>(6); // 将topicsPerPage改为状态
     const [readTopics, setReadTopics] = useState<Record<string, boolean>>({});
+    const [favoriteTopics, setFavoriteTopics] = useState<Record<string, boolean>>({}); // 收藏状态
 
     // 筛选状态
     const [filterRead, setFilterRead] = useState<boolean>(false); // 过滤已读
+    const [filterFavorite, setFilterFavorite] = useState<boolean>(false); // 筛选收藏
     const [searchText, setSearchText] = useState<string>(""); // 全文搜索
 
     // 默认时间范围：最近7天
@@ -124,6 +127,23 @@ export default function LatestTopicsPage() {
         start: today(getLocalTimeZone()).subtract({ days: 3 }),
         end: today(getLocalTimeZone()).add({ days: 1 })
     });
+
+    // 初始化收藏状态管理器
+    const favoriteStatusManager = useMemo(() => TopicFavoriteStatusManager.getInstance(), []);
+
+    // 加载收藏状态
+    useEffect(() => {
+        const loadFavoriteStatus = async () => {
+            try {
+                const status = await favoriteStatusManager.getAllFavoriteStatus();
+                setFavoriteTopics(status);
+            } catch (error) {
+                console.error("Failed to load favorite status:", error);
+            }
+        };
+
+        loadFavoriteStatus();
+    }, []);
 
     // 初始化已读状态
     useEffect(() => {
@@ -240,15 +260,20 @@ export default function LatestTopicsPage() {
         fetchLatestTopics(start, end);
     }, [dateRange]);
 
-    // 当筛选条件变化时重置到第一页
+    // 当筛选条件改变时，重置页码
     useEffect(() => {
         setPage(1);
-    }, [filterRead, searchText, dateRange]);
+    }, [filterRead, filterFavorite, searchText, dateRange]);
 
     // 应用筛选器
     const filteredTopics = topics.filter(topic => {
         // 过滤已读
         if (filterRead && readTopics[topic.topicId]) {
+            return false;
+        }
+
+        // 筛选收藏
+        if (filterFavorite && !favoriteTopics[topic.topicId]) {
             return false;
         }
 
@@ -275,13 +300,72 @@ export default function LatestTopicsPage() {
     // 标记话题为已读
     const markAsRead = async (topicId: string) => {
         try {
-            const readStatusManager = TopicReadStatusManager.getInstance();
+            // 更新本地状态
+            setReadTopics(prev => ({
+                ...prev,
+                [topicId]: true
+            }));
 
-            await readStatusManager.markAsRead(topicId);
-            // 更新本地状态以触发重新渲染
-            setReadTopics(prev => ({ ...prev, [topicId]: true }));
+            // 使用TopicReadStatusManager更新IndexedDB
+            await TopicReadStatusManager.getInstance().markAsRead(topicId);
+
+            addToast({
+                title: "标记成功",
+                description: "话题已标记为已读",
+                color: "success",
+                variant: "flat"
+            });
         } catch (error) {
-            console.error("标记话题为已读失败:", error);
+            console.error("Failed to mark topic as read:", error);
+            addToast({
+                title: "标记失败",
+                description: "无法标记话题为已读",
+                color: "danger",
+                variant: "flat"
+            });
+        }
+    };
+
+    // 切换收藏状态
+    const toggleFavorite = async (topicId: string) => {
+        try {
+            const isCurrentlyFavorite = favoriteTopics[topicId];
+
+            if (isCurrentlyFavorite) {
+                // 取消收藏
+                await favoriteStatusManager.removeFromFavorites(topicId);
+                setFavoriteTopics(prev => ({
+                    ...prev,
+                    [topicId]: false
+                }));
+                addToast({
+                    title: "取消收藏",
+                    description: "话题已从收藏中移除",
+                    color: "success",
+                    variant: "flat"
+                });
+            } else {
+                // 添加收藏
+                await favoriteStatusManager.markAsFavorite(topicId);
+                setFavoriteTopics(prev => ({
+                    ...prev,
+                    [topicId]: true
+                }));
+                addToast({
+                    title: "收藏成功",
+                    description: "话题已添加到收藏",
+                    color: "success",
+                    variant: "flat"
+                });
+            }
+        } catch (error) {
+            console.error("Failed to toggle favorite status:", error);
+            addToast({
+                title: "操作失败",
+                description: "无法更新收藏状态",
+                color: "danger",
+                variant: "flat"
+            });
         }
     };
 
@@ -334,6 +418,14 @@ export default function LatestTopicsPage() {
                                     过滤已读
                                 </Checkbox>
 
+                                <Checkbox
+                                    isSelected={filterFavorite}
+                                    onValueChange={setFilterFavorite}
+                                    className="w-100"
+                                >
+                                    筛选收藏
+                                </Checkbox>
+
                                 {/* 日期选择器 + 刷新按钮 */}
                                 <DateRangePicker
                                     className="max-w-xs"
@@ -351,7 +443,6 @@ export default function LatestTopicsPage() {
                                 <Button
                                     color="primary"
                                     isLoading={loading}
-                                    variant="flat"
                                     onPress={() => {
                                         const start = dateRange.start.toDate(getLocalTimeZone());
                                         const end = dateRange.end.toDate(getLocalTimeZone());
@@ -469,7 +560,7 @@ export default function LatestTopicsPage() {
                                                                 群ID: {topic.groupId}
                                                             </Chip>
                                                         </div>
-                                                        {/* 右下角的更多选项和已读按钮 */}
+                                                        {/* 右下角的更多选项、收藏按钮和已读按钮 */}
                                                         <div className="absolute bottom-3 right-3 flex gap-1">
                                                             <Dropdown>
                                                                 <DropdownTrigger>
@@ -527,6 +618,32 @@ export default function LatestTopicsPage() {
                                                                     </DropdownItem>
                                                                 </DropdownMenu>
                                                             </Dropdown>
+                                                            <Tooltip
+                                                                color="warning"
+                                                                content={
+                                                                    favoriteTopics[topic.topicId]
+                                                                        ? "取消收藏"
+                                                                        : "添加收藏"
+                                                                }
+                                                                placement="top"
+                                                            >
+                                                                <HeroUIButton
+                                                                    isIconOnly
+                                                                    color="warning"
+                                                                    size="sm"
+                                                                    variant="flat"
+                                                                    onPress={() => toggleFavorite(topic.topicId)}
+                                                                >
+                                                                    <Star
+                                                                        size={16}
+                                                                        fill={
+                                                                            favoriteTopics[topic.topicId]
+                                                                                ? "currentColor"
+                                                                                : "none"
+                                                                        }
+                                                                    />
+                                                                </HeroUIButton>
+                                                            </Tooltip>
                                                             {!readTopics[topic.topicId] && (
                                                                 <Tooltip
                                                                     color="primary"
@@ -567,7 +684,7 @@ export default function LatestTopicsPage() {
                             </div>
                         ) : (
                             <div className="text-center py-12">
-                                <p className="text-default-500">暂无话题数据</p>
+                                <p className="text-default-500">暂无话题数据，请调整筛选条件后重试</p>
                                 <Button
                                     className="mt-4"
                                     color="primary"

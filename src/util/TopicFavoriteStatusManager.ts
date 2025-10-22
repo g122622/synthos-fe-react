@@ -1,29 +1,30 @@
-export class TopicReadStatusManager {
-    private static instance: TopicReadStatusManager;
+export class TopicFavoriteStatusManager {
+    private static instance: TopicFavoriteStatusManager;
     private dbName: string;
     private storeName: string;
     private db: IDBDatabase | null;
 
     private constructor() {
-        this.dbName = "SynthosDB_ReadTopics";
-        this.storeName = "ReadTopics";
+        this.dbName = "SynthosDB_FavoriteTopics";
+        this.storeName = "FavoriteTopics";
         this.db = null;
     }
 
-    static getInstance(): TopicReadStatusManager {
-        if (!TopicReadStatusManager.instance) {
-            TopicReadStatusManager.instance = new TopicReadStatusManager();
+    static getInstance(): TopicFavoriteStatusManager {
+        if (!TopicFavoriteStatusManager.instance) {
+            TopicFavoriteStatusManager.instance = new TopicFavoriteStatusManager();
         }
 
-        return TopicReadStatusManager.instance;
+        return TopicFavoriteStatusManager.instance;
     }
 
     async init(): Promise<void> {
         return new Promise((resolve, reject) => {
+            // 使用版本2以确保与已有的数据库兼容
             const request = indexedDB.open(this.dbName, 1);
 
             request.onerror = () => {
-                console.error("Failed to open IndexedDB for read status manager");
+                console.error("Failed to open IndexedDB for favorite status manager");
                 reject(new Error("Failed to open IndexedDB"));
             };
 
@@ -38,13 +39,13 @@ export class TopicReadStatusManager {
                 if (!db.objectStoreNames.contains(this.storeName)) {
                     const store = db.createObjectStore(this.storeName, { keyPath: "topicId" });
 
-                    store.createIndex("isRead", "isRead", { unique: false });
+                    store.createIndex("isFavorite", "isFavorite", { unique: false });
                 }
             };
         });
     }
 
-    async getAllReadStatus(): Promise<Record<string, boolean>> {
+    async getAllFavoriteStatus(): Promise<Record<string, boolean>> {
         if (!this.db) {
             await this.init();
         }
@@ -64,19 +65,19 @@ export class TopicReadStatusManager {
                 const result: Record<string, boolean> = {};
 
                 request.result.forEach(record => {
-                    result[record.topicId] = record.isRead;
+                    result[record.topicId] = record.isFavorite;
                 });
                 resolve(result);
             };
 
             request.onerror = () => {
-                console.error("Failed to get all read status");
-                reject(new Error("Failed to get all read status"));
+                console.error("Failed to get all favorite status");
+                reject(new Error("Failed to get all favorite status"));
             };
         });
     }
 
-    async markAsRead(topicId: string): Promise<void> {
+    async markAsFavorite(topicId: string): Promise<void> {
         if (!this.db) {
             await this.init();
         }
@@ -91,20 +92,48 @@ export class TopicReadStatusManager {
             const transaction = this.db.transaction([this.storeName], "readwrite");
             const store = transaction.objectStore(this.storeName);
 
-            const request = store.put({ topicId, isRead: true });
+            const request = store.put({ topicId, isFavorite: true });
 
             request.onsuccess = () => {
                 resolve();
             };
 
             request.onerror = () => {
-                console.error(`Failed to mark topic ${topicId} as read`);
-                reject(new Error(`Failed to mark topic ${topicId} as read`));
+                console.error(`Failed to mark topic ${topicId} as favorite`);
+                reject(new Error(`Failed to mark topic ${topicId} as favorite`));
             };
         });
     }
 
-    async isTopicRead(topicId: string): Promise<boolean> {
+    async removeFromFavorites(topicId: string): Promise<void> {
+        if (!this.db) {
+            await this.init();
+        }
+
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(new Error("Database not initialized"));
+
+                return;
+            }
+
+            const transaction = this.db.transaction([this.storeName], "readwrite");
+            const store = transaction.objectStore(this.storeName);
+
+            const request = store.delete(topicId);
+
+            request.onsuccess = () => {
+                resolve();
+            };
+
+            request.onerror = () => {
+                console.error(`Failed to remove topic ${topicId} from favorites`);
+                reject(new Error(`Failed to remove topic ${topicId} from favorites`));
+            };
+        });
+    }
+
+    async isTopicFavorite(topicId: string): Promise<boolean> {
         if (!this.db) {
             await this.init();
         }
@@ -121,15 +150,15 @@ export class TopicReadStatusManager {
             const request = store.get(topicId);
 
             request.onsuccess = () => {
-                resolve(request.result ? request.result.isRead : false);
+                resolve(request.result ? request.result.isFavorite : false);
             };
 
             request.onerror = () => {
-                console.error(`Failed to check read status for topic ${topicId}`);
-                reject(new Error(`Failed to check read status for topic ${topicId}`));
+                console.error(`Failed to check favorite status for topic ${topicId}`);
+                reject(new Error(`Failed to check favorite status for topic ${topicId}`));
             };
         });
     }
 }
 
-export default TopicReadStatusManager;
+export default TopicFavoriteStatusManager;
