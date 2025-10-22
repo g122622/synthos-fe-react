@@ -5,10 +5,10 @@ import { Pagination } from "@heroui/pagination";
 import { Spinner } from "@heroui/spinner";
 import { Chip } from "@heroui/chip";
 import { ScrollShadow } from "@heroui/scroll-shadow";
-import { DateRangePicker, Tooltip } from "@heroui/react";
+import { DateRangePicker, Tooltip, addToast } from "@heroui/react";
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@heroui/dropdown";
 import { Button as HeroUIButton } from "@heroui/button";
-import { MoreVertical, Check } from "lucide-react";
+import { MoreVertical, Check, Copy } from "lucide-react";
 import { today, getLocalTimeZone } from "@internationalized/date";
 import { Slider } from "@heroui/slider"; // 引入Slider组件
 
@@ -338,6 +338,43 @@ export default function LatestTopicsPage() {
                                                     <CardHeader className="flex flex-col gap-2">
                                                         <div className="flex justify-between items-start">
                                                             <h3 className="text-lg font-bold">{topic.topic}</h3>
+                                                            <Tooltip
+                                                                color="default"
+                                                                content="复制话题内容"
+                                                                placement="top"
+                                                            >
+                                                                <HeroUIButton
+                                                                    isIconOnly
+                                                                    size="sm"
+                                                                    variant="light"
+                                                                    onPress={() => {
+                                                                        // 复制话题内容到剪贴板
+                                                                        const contentToCopy = `话题: ${topic.topic}\n\n参与者: ${contributorsArray.join(", ")}\n\n详情: ${topic.detail}\n\n时间: ${new Date(topic.timeStart).toLocaleString()} - ${new Date(topic.timeEnd).toLocaleString()}\n群ID: ${topic.groupId}\n话题ID: ${topic.topicId}\n会话ID: ${topic.sessionId}`;
+
+                                                                        navigator.clipboard
+                                                                            .writeText(contentToCopy)
+                                                                            .then(() => {
+                                                                                addToast({
+                                                                                    title: "已复制到剪贴板",
+                                                                                    variant: "flat",
+                                                                                    color: "success",
+                                                                                    timeout: 2000
+                                                                                });
+                                                                            })
+                                                                            .catch(err => {
+                                                                                console.error("复制失败:", err);
+                                                                                addToast({
+                                                                                    title: "复制失败",
+                                                                                    variant: "flat",
+                                                                                    color: "danger",
+                                                                                    timeout: 2000
+                                                                                });
+                                                                            });
+                                                                    }}
+                                                                >
+                                                                    <Copy size={16} />
+                                                                </HeroUIButton>
+                                                            </Tooltip>
                                                         </div>
                                                         <div className="text-default-500 text-sm">
                                                             <Chip className="mr-1" size="sm" variant="flat">
