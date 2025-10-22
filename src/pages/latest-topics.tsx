@@ -5,7 +5,7 @@ import { Pagination } from "@heroui/pagination";
 import { Spinner } from "@heroui/spinner";
 import { Chip } from "@heroui/chip";
 import { ScrollShadow } from "@heroui/scroll-shadow";
-import { DateRangePicker } from "@heroui/react";
+import { DateRangePicker, Tooltip } from "@heroui/react";
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@heroui/dropdown";
 import { Button as HeroUIButton } from "@heroui/button";
 import { MoreVertical, Check } from "lucide-react";
@@ -20,6 +20,7 @@ import {
 } from "@/services/api";
 import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
+import TopicReadStatusManager from "@/util/TopicReadStatusManager";
 
 interface TopicItem {
     topicId: string;
@@ -119,6 +120,22 @@ export default function LatestTopicsPage() {
         start: today(getLocalTimeZone()).subtract({ days: 7 }),
         end: today(getLocalTimeZone())
     });
+
+    // 初始化已读状态
+    useEffect(() => {
+        const initReadStatus = async () => {
+            try {
+                const readStatusManager = TopicReadStatusManager.getInstance();
+                const readStatus = await readStatusManager.getAllReadStatus();
+
+                setReadTopics(readStatus);
+            } catch (error) {
+                console.error("初始化已读状态失败:", error);
+            }
+        };
+
+        initReadStatus();
+    }, []);
 
     // 获取最新话题数据（带时间范围）
     const fetchLatestTopics = async (start: Date, end: Date) => {
@@ -223,26 +240,17 @@ export default function LatestTopicsPage() {
     const totalPages = Math.ceil(topics.length / topicsPerPage);
     const currentTopics = topics.slice((page - 1) * topicsPerPage, page * topicsPerPage);
 
-    // 初始化已读状态
-    useEffect(() => {
-        const storedReadTopics = localStorage.getItem("readTopics");
-
-        if (storedReadTopics) {
-            try {
-                setReadTopics(JSON.parse(storedReadTopics));
-            } catch (error) {
-                console.error("解析已读状态失败:", error);
-                localStorage.removeItem("readTopics");
-            }
-        }
-    }, []);
-
     // 标记话题为已读
-    const markAsRead = (topicId: string) => {
-        const newReadTopics = { ...readTopics, [topicId]: true };
+    const markAsRead = async (topicId: string) => {
+        try {
+            const readStatusManager = TopicReadStatusManager.getInstance();
 
-        setReadTopics(newReadTopics);
-        localStorage.setItem("readTopics", JSON.stringify(newReadTopics));
+            await readStatusManager.markAsRead(topicId);
+            // 更新本地状态以触发重新渲染
+            setReadTopics(prev => ({ ...prev, [topicId]: true }));
+        } catch (error) {
+            console.error("标记话题为已读失败:", error);
+        }
     };
 
     return (
@@ -435,15 +443,21 @@ export default function LatestTopicsPage() {
                                                                 </DropdownMenu>
                                                             </Dropdown>
                                                             {!readTopics[topic.topicId] && (
-                                                                <HeroUIButton
-                                                                    isIconOnly
+                                                                <Tooltip
                                                                     color="primary"
-                                                                    size="sm"
-                                                                    variant="solid"
-                                                                    onPress={() => markAsRead(topic.topicId)}
+                                                                    content="标记为已读"
+                                                                    placement="top"
                                                                 >
-                                                                    <Check size={16} />
-                                                                </HeroUIButton>
+                                                                    <HeroUIButton
+                                                                        isIconOnly
+                                                                        color="primary"
+                                                                        size="sm"
+                                                                        variant="flat"
+                                                                        onPress={() => markAsRead(topic.topicId)}
+                                                                    >
+                                                                        <Check size={16} />
+                                                                    </HeroUIButton>
+                                                                </Tooltip>
                                                             )}
                                                         </div>
                                                     </CardBody>
