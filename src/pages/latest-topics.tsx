@@ -5,10 +5,10 @@ import { Pagination } from "@heroui/pagination";
 import { Spinner } from "@heroui/spinner";
 import { Chip } from "@heroui/chip";
 import { ScrollShadow } from "@heroui/scroll-shadow";
-import { DateRangePicker, Tooltip, addToast } from "@heroui/react";
+import { DateRangePicker, Tooltip, addToast, Input, Checkbox } from "@heroui/react";
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@heroui/dropdown";
 import { Button as HeroUIButton } from "@heroui/button";
-import { MoreVertical, Check, Copy } from "lucide-react";
+import { MoreVertical, Check, Copy, Search } from "lucide-react";
 import { today, getLocalTimeZone } from "@internationalized/date";
 import { Slider } from "@heroui/slider"; // 引入Slider组件
 
@@ -115,10 +115,14 @@ export default function LatestTopicsPage() {
     const [topicsPerPage, setTopicsPerPage] = useState<number>(6); // 将topicsPerPage改为状态
     const [readTopics, setReadTopics] = useState<Record<string, boolean>>({});
 
+    // 筛选状态
+    const [filterRead, setFilterRead] = useState<boolean>(false); // 过滤已读
+    const [searchText, setSearchText] = useState<string>(""); // 全文搜索
+
     // 默认时间范围：最近7天
     const [dateRange, setDateRange] = useState({
-        start: today(getLocalTimeZone()).subtract({ days: 7 }),
-        end: today(getLocalTimeZone())
+        start: today(getLocalTimeZone()).subtract({ days: 3 }),
+        end: today(getLocalTimeZone()).add({ days: 1 })
     });
 
     // 初始化已读状态
@@ -236,9 +240,37 @@ export default function LatestTopicsPage() {
         fetchLatestTopics(start, end);
     }, [dateRange]);
 
+    // 当筛选条件变化时重置到第一页
+    useEffect(() => {
+        setPage(1);
+    }, [filterRead, searchText, dateRange]);
+
+    // 应用筛选器
+    const filteredTopics = topics.filter(topic => {
+        // 过滤已读
+        if (filterRead && readTopics[topic.topicId]) {
+            return false;
+        }
+
+        // 全文搜索
+        if (searchText) {
+            const searchTextLower = searchText.toLowerCase();
+            const topicMatch = topic?.topic?.toLowerCase()?.includes(searchTextLower);
+            const detailMatch = topic?.detail?.toLowerCase()?.includes(searchTextLower);
+            const contributorsArray = parseContributors(topic?.contributors);
+            const contributorMatch = contributorsArray.some(contributor =>
+                contributor.toLowerCase().includes(searchTextLower)
+            );
+
+            return topicMatch || detailMatch || contributorMatch;
+        }
+
+        return true;
+    });
+
     // 分页处理
-    const totalPages = Math.ceil(topics.length / topicsPerPage);
-    const currentTopics = topics.slice((page - 1) * topicsPerPage, page * topicsPerPage);
+    const totalPages = Math.ceil(filteredTopics.length / topicsPerPage);
+    const currentTopics = filteredTopics.slice((page - 1) * topicsPerPage, page * topicsPerPage);
 
     // 标记话题为已读
     const markAsRead = async (topicId: string) => {
@@ -263,30 +295,46 @@ export default function LatestTopicsPage() {
 
                 <Card className="mt-6">
                     <CardHeader className="flex flex-col md:flex-row justify-between items-center pl-7 pr-7 gap-4">
-                        <h2 className="text-xl font-bold">话题列表</h2>
-
-                        {/* 控制每页显示数量的Slider */}
                         <div className="flex flex-col md:flex-row items-center gap-4">
-                            <div className="flex items-center gap-2">
-                                <div className="text-default-600 text-sm w-30">每页显示:</div>
-                                <Slider
-                                    aria-label="每页显示话题数量"
-                                    className="max-w-[120px]"
-                                    color="primary"
-                                    defaultValue={6}
-                                    maxValue={12}
-                                    minValue={3}
-                                    showTooltip={true}
-                                    size="lg"
-                                    step={3}
-                                    value={topicsPerPage}
-                                    onChange={setTopicsPerPage}
-                                />
-                                <span className="text-default-900 text-sm w-6">{topicsPerPage}</span>
-                            </div>
+                            <h2 className="text-xl font-bold">话题列表</h2>
+                            <Input
+                                isClearable
+                                aria-label="全文搜索"
+                                className="max-w-[200px]"
+                                placeholder="搜索话题..."
+                                startContent={<Search size={16} />}
+                                value={searchText}
+                                onValueChange={setSearchText}
+                            />
+                        </div>
 
-                            {/* 日期选择器 + 刷新按钮 */}
+                        {/* 顶栏右侧 */}
+                        <div className="flex flex-col md:flex-row items-center gap-4">
+                            {/* 筛选控件 */}
                             <div className="flex gap-3 items-center">
+                                <div className="flex items-center gap-2">
+                                    <div className="text-default-600 text-sm w-27">每页显示:</div>
+                                    <Slider
+                                        aria-label="每页显示话题数量"
+                                        className="max-w-[120px]"
+                                        color="primary"
+                                        defaultValue={6}
+                                        maxValue={12}
+                                        minValue={3}
+                                        showTooltip={true}
+                                        size="lg"
+                                        step={3}
+                                        value={topicsPerPage}
+                                        onChange={setTopicsPerPage}
+                                    />
+                                    <span className="text-default-900 text-sm w-30">{topicsPerPage} 张卡片</span>
+                                </div>
+
+                                <Checkbox isSelected={filterRead} onValueChange={setFilterRead} className="w-100">
+                                    过滤已读
+                                </Checkbox>
+
+                                {/* 日期选择器 + 刷新按钮 */}
                                 <DateRangePicker
                                     className="max-w-xs"
                                     label="时间范围"
