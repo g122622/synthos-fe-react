@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@heroui/button";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/table";
 import { Chip } from "@heroui/chip";
 import { Spinner } from "@heroui/spinner";
+import * as echarts from "echarts";
 
 import { getGroupDetails, getChatMessagesByGroupId } from "@/services/api";
 import { GroupDetailsRecord } from "@/types/app";
@@ -14,6 +15,62 @@ export default function GroupsPage() {
     const [groups, setGroups] = useState<GroupDetailsRecord>({});
     const [recentMessageCounts, setRecentMessageCounts] = useState<Record<string, number>>({});
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const chartRefs = useRef<Record<string, HTMLDivElement | null>>({});
+    const chartInstances = useRef<Record<string, echarts.EChartsType | null>>({});
+
+    // 渲染消息量走势图表
+    const renderMessageTrendChart = (groupId: string, hourlyData: number[]) => {
+        const chartRef = chartRefs.current[groupId];
+
+        if (chartRef) {
+            // 如果图表实例已存在，先销毁
+            if (chartInstances.current[groupId]) {
+                chartInstances.current[groupId]?.dispose();
+            }
+
+            // 初始化图表实例
+            const chartInstance = echarts.init(chartRef);
+            chartInstances.current[groupId] = chartInstance;
+
+            // 生成X轴标签
+            const xLabels = generateHourlyTimestamps().slice(0, 24).map(formatHour);
+
+            // 图表配置
+            const option = {
+                tooltip: {
+                    trigger: "axis"
+                },
+                xAxis: {
+                    type: "category",
+                    data: xLabels,
+                    axisLabel: {
+                        rotate: 45,
+                        fontSize: 10
+                    }
+                },
+                yAxis: {
+                    type: "value"
+                },
+                series: [
+                    {
+                        data: hourlyData,
+                        type: "line",
+                        smooth: true,
+                        areaStyle: {}
+                    }
+                ],
+                grid: {
+                    left: "10%",
+                    right: "10%",
+                    top: "10%",
+                    bottom: "20%"
+                }
+            };
+
+            // 设置图表配置
+            chartInstance.setOption(option);
+        }
+    };
 
     // 获取最近24小时的时间戳
     const getRecent24HoursTimestamps = () => {
@@ -21,6 +78,25 @@ export default function GroupsPage() {
         const twentyFourHoursAgo = now - 24 * 60 * 60 * 1000;
 
         return { startTime: twentyFourHoursAgo, endTime: now };
+    };
+
+    // 生成最近24小时的小时时间点
+    const generateHourlyTimestamps = () => {
+        const now = new Date().getTime();
+        const twentyFourHoursAgo = now - 24 * 60 * 60 * 1000;
+        const timestamps = [];
+
+        for (let i = 0; i <= 24; i++) {
+            timestamps.push(twentyFourHoursAgo + i * 60 * 60 * 1000);
+        }
+
+        return timestamps;
+    };
+
+    // 获取小时格式化时间
+    const formatHour = (timestamp: number) => {
+        const date = new Date(timestamp);
+        return `${date.getHours()}:00`;
     };
 
     // 获取群组信息
@@ -47,6 +123,7 @@ export default function GroupsPage() {
         const fetchRecentMessageCounts = async (groupsData: GroupDetailsRecord) => {
             const { startTime, endTime } = getRecent24HoursTimestamps();
             const counts: Record<string, number> = {};
+            const hourlyCounts: Record<string, number[]> = {};
 
             // 并行获取所有群组的最近24小时消息量
             const promises = Object.keys(groupsData).map(async groupId => {
@@ -55,17 +132,47 @@ export default function GroupsPage() {
 
                     if (response.success) {
                         counts[groupId] = response.data.length;
+
+                        // 计算每小时消息量
+                        const hourlyData = new Array(24).fill(0);
+                        const hourlyTimestamps = generateHourlyTimestamps();
+
+                        response.data.forEach(msg => {
+                            const msgTime = msg.timestamp;
+                            for (let i = 0; i < 24; i++) {
+                                if (msgTime >= hourlyTimestamps[i] && msgTime < hourlyTimestamps[i + 1]) {
+                                    hourlyData[i]++;
+                                    break;
+                                }
+                            }
+                        });
+
+                        hourlyCounts[groupId] = hourlyData;
                     } else {
                         counts[groupId] = 0;
+                        hourlyCounts[groupId] = new Array(24).fill(0);
                     }
                 } catch (error) {
                     console.error(`获取群组 ${groupId} 的最近24小时消息量失败:`, error);
                     counts[groupId] = 0;
+                    hourlyCounts[groupId] = new Array(24).fill(0);
                 }
             });
 
             await Promise.all(promises);
             setRecentMessageCounts(counts);
+            // 保存每小时消息量用于图表渲染
+            (window as any).hourlyCounts = hourlyCounts;
+
+            // 在数据加载完成后渲染图表
+            setTimeout(() => {
+                Object.keys(hourlyCounts).forEach(groupId => {
+                    const chartRef = chartRefs.current[groupId];
+                    if (chartRef) {
+                        renderMessageTrendChart(groupId, hourlyCounts[groupId]);
+                    }
+                });
+            }, 100);
         };
 
         fetchGroups();
@@ -145,6 +252,7 @@ export default function GroupsPage() {
                                     <TableColumn>分组策略</TableColumn>
                                     <TableColumn>AI模型</TableColumn>
                                     <TableColumn>最近24小时消息量</TableColumn>
+                                    <TableColumn>最近24小时消息量走势</TableColumn>
                                 </TableHeader>
                                 <TableBody emptyContent={"未找到群组信息"}>
                                     {Object.entries(groups).map(([groupId, groupDetail]) => (
@@ -176,6 +284,14 @@ export default function GroupsPage() {
                                                 ) : (
                                                     <Spinner size="sm" />
                                                 )}
+                                            </TableCell>
+                                            <TableCell>
+                                                <div
+                                                    ref={el => {
+                                                        chartRefs.current[groupId] = el;
+                                                    }}
+                                                    style={{ width: "300px", height: "100px" }}
+                                                />
                                             </TableCell>
                                         </TableRow>
                                     ))}
