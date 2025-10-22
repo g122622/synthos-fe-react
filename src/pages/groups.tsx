@@ -30,6 +30,7 @@ export default function GroupsPage() {
 
             // 初始化图表实例
             const chartInstance = echarts.init(chartRef);
+
             chartInstances.current[groupId] = chartInstance;
 
             // 生成X轴标签
@@ -96,6 +97,7 @@ export default function GroupsPage() {
     // 获取小时格式化时间
     const formatHour = (timestamp: number) => {
         const date = new Date(timestamp);
+
         return `${date.getHours()}:00`;
     };
 
@@ -139,6 +141,7 @@ export default function GroupsPage() {
 
                         response.data.forEach(msg => {
                             const msgTime = msg.timestamp;
+
                             for (let i = 0; i < 24; i++) {
                                 if (msgTime >= hourlyTimestamps[i] && msgTime < hourlyTimestamps[i + 1]) {
                                     hourlyData[i]++;
@@ -168,6 +171,7 @@ export default function GroupsPage() {
             setTimeout(() => {
                 Object.keys(hourlyCounts).forEach(groupId => {
                     const chartRef = chartRefs.current[groupId];
+
                     if (chartRef) {
                         renderMessageTrendChart(groupId, hourlyCounts[groupId]);
                     }
@@ -260,11 +264,12 @@ export default function GroupsPage() {
                                         <TableRow key={groupId}>
                                             <TableCell>
                                                 <img
-                                                    src={`http://p.qlogo.cn/gh/${groupId}/${groupId}/0`}
                                                     alt="群头像"
                                                     className="w-10 h-10 rounded-full"
+                                                    src={`http://p.qlogo.cn/gh/${groupId}/${groupId}/0`}
                                                     onError={e => {
                                                         const target = e.target as HTMLImageElement;
+
                                                         target.onerror = null;
                                                         target.src =
                                                             "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";

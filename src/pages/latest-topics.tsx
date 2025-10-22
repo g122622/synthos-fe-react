@@ -369,6 +369,17 @@ export default function LatestTopicsPage() {
                                                                                             key={idx}
                                                                                             size="sm"
                                                                                             variant="flat"
+                                                                                            style={{
+                                                                                                backgroundColor:
+                                                                                                    generateColorFromName(
+                                                                                                        contributor
+                                                                                                    ),
+                                                                                                color: generateColorFromName(
+                                                                                                    contributor,
+                                                                                                    false
+                                                                                                ),
+                                                                                                fontWeight: "bold"
+                                                                                            }}
                                                                                         >
                                                                                             {contributor}
                                                                                         </Chip>
