@@ -118,7 +118,7 @@ export default function LatestTopicsPage() {
     const [favoriteTopics, setFavoriteTopics] = useState<Record<string, boolean>>({}); // 收藏状态
 
     // 筛选状态
-    const [filterRead, setFilterRead] = useState<boolean>(false); // 过滤已读
+    const [filterRead, setFilterRead] = useState<boolean>(true); // 过滤已读
     const [filterFavorite, setFilterFavorite] = useState<boolean>(false); // 筛选收藏
     const [searchText, setSearchText] = useState<string>(""); // 全文搜索
 
