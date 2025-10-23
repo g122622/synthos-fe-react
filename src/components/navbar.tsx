@@ -16,14 +16,7 @@ import clsx from "clsx";
 
 import { siteConfig } from "@/config/site";
 import { ThemeSwitch } from "@/components/theme-switch";
-import {
-    TwitterIcon,
-    GithubIcon,
-    DiscordIcon,
-    HeartFilledIcon,
-    SearchIcon
-} from "@/components/icons";
-import { Logo } from "@/components/icons";
+import { TwitterIcon, GithubIcon, DiscordIcon, HeartFilledIcon, SearchIcon } from "@/components/icons";
 
 export const Navbar = () => {
     const searchInput = (
@@ -40,9 +33,7 @@ export const Navbar = () => {
             }
             labelPlacement="outside"
             placeholder="Search..."
-            startContent={
-                <SearchIcon className="text-base text-default-400 pointer-events-none flex-shrink-0" />
-            }
+            startContent={<SearchIcon className="text-base text-default-400 pointer-events-none flex-shrink-0" />}
             type="search"
         />
     );
@@ -51,13 +42,9 @@ export const Navbar = () => {
         <HeroUINavbar maxWidth="xl" position="sticky">
             <NavbarContent className="basis-1/5 sm:basis-full" justify="start">
                 <NavbarBrand className="gap-3 max-w-fit">
-                    <Link
-                        className="flex justify-start items-center gap-1"
-                        color="foreground"
-                        href="/"
-                    >
-                        <Logo />
-                        <p className="font-bold text-inherit">ACME</p>
+                    <Link className="flex justify-start items-center gap-1" color="foreground" href="/">
+                        <img alt="logo" src="./logo.webp" className="w-7"/>
+                        <p className="font-bold text-inherit">Synthos</p>
                     </Link>
                 </NavbarBrand>
                 <div className="hidden lg:flex gap-4 justify-start ml-2">

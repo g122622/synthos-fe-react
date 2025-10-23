@@ -136,6 +136,7 @@ export default function LatestTopicsPage() {
         const loadFavoriteStatus = async () => {
             try {
                 const status = await favoriteStatusManager.getAllFavoriteStatus();
+
                 setFavoriteTopics(status);
             } catch (error) {
                 console.error("Failed to load favorite status:", error);
@@ -372,9 +373,12 @@ export default function LatestTopicsPage() {
     return (
         <DefaultLayout>
             <section className="flex flex-col gap-4 py-8 md:py-10">
-                <div className="flex flex-col items-center justify-center gap-4">
-                    <h1 className={title()}>最新话题</h1>
-                    <p className="text-default-600 max-w-2xl text-center">按时间排序的最新聊天话题摘要</p>
+                <div className="flex items-center justify-center">
+                    <img alt="logo" className="w-21 mr-5" src="./logo.webp" />
+                    <div className="flex flex-col items-center justify-center gap-4">
+                        <h1 className={title()}>最新话题</h1>
+                        <p className="text-default-600 max-w-2xl text-center">按时间排序的最新聊天话题摘要</p>
+                    </div>
                 </div>
 
                 <Card className="mt-6">
@@ -414,14 +418,14 @@ export default function LatestTopicsPage() {
                                     <span className="text-default-900 text-sm w-30">{topicsPerPage} 张卡片</span>
                                 </div>
 
-                                <Checkbox isSelected={filterRead} onValueChange={setFilterRead} className="w-100">
+                                <Checkbox className="w-100" isSelected={filterRead} onValueChange={setFilterRead}>
                                     过滤已读
                                 </Checkbox>
 
                                 <Checkbox
+                                    className="w-100"
                                     isSelected={filterFavorite}
                                     onValueChange={setFilterFavorite}
-                                    className="w-100"
                                 >
                                     筛选收藏
                                 </Checkbox>
@@ -635,12 +639,12 @@ export default function LatestTopicsPage() {
                                                                     onPress={() => toggleFavorite(topic.topicId)}
                                                                 >
                                                                     <Star
-                                                                        size={16}
                                                                         fill={
                                                                             favoriteTopics[topic.topicId]
                                                                                 ? "currentColor"
                                                                                 : "none"
                                                                         }
+                                                                        size={16}
                                                                     />
                                                                 </HeroUIButton>
                                                             </Tooltip>
