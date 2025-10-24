@@ -5,7 +5,7 @@ import { Pagination } from "@heroui/pagination";
 import { Spinner } from "@heroui/spinner";
 import { Chip } from "@heroui/chip";
 import { ScrollShadow } from "@heroui/scroll-shadow";
-import { DateRangePicker, Tooltip, addToast, Input, Checkbox } from "@heroui/react";
+import { DateRangePicker, Tooltip, addToast, Input, Checkbox, Link } from "@heroui/react";
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@heroui/dropdown";
 import { Button as HeroUIButton } from "@heroui/button";
 import { MoreVertical, Check, Copy, Search, Star } from "lucide-react";
@@ -65,29 +65,61 @@ const generateColorFromName = (name: string, shouldContainAlpha: boolean = true)
     return `hsla(${hue}, 70%, 40%, 0.1)`;
 };
 
-// 创建一个组件来渲染带有高亮的详情文本
-const HighlightedDetail: React.FC<{ detail: string; contributors: string[] }> = ({ detail, contributors }) => {
+// 创建一个自定义图标组件用于链接
+const AnchorIcon = (props: React.SVGProps<SVGSVGElement>) => {
+    return (
+        <svg
+            aria-hidden="true"
+            focusable="false"
+            height="16"
+            role="presentation"
+            viewBox="0 0 24 24"
+            width="16"
+            {...props}
+        >
+            <path
+                d="M8.465,11.293c1.133-1.133,3.109-1.133,4.242,0L13.414,12l1.414-1.414l-0.707-0.707c-0.943-0.944-2.199-1.465-3.535-1.465 S7.994,8.935,7.051,9.879L4.929,12c-1.948,1.949-1.948,5.122,0,7.071c0.975,0.975,2.255,1.462,3.535,1.462 c1.281,0,2.562-0.487,3.536-1.462l0.707-0.707l-1.414-1.414l-0.707,0.707c-1.17,1.167-3.073,1.169-4.243,0 c-1.169-1.17-1.169-3.073,0-4.243L8.465,11.293z"
+                fill="currentColor"
+            />
+            <path
+                d="M12,4.929l-0.707,0.707l1.414,1.414l0.707-0.707c1.169-1.167,3.072-1.169,4.243,0c1.169,1.17,1.169,3.073,0,4.243 l-2.122,2.121c-1.133,1.133-3.109,1.133-4.242,0L10.586,12l-1.414,1.414l0.707,0.707c0.943,0.944,2.199,1.465,3.535,1.465 s2.592-0.521,3.535-1.465L19.071,12c1.948-1.949,1.948-5.122,0-7.071C17.121,2.979,13.948,2.98,12,4.929z"
+                fill="currentColor"
+            />
+        </svg>
+    );
+};
+
+// 创建一个组件来渲染带有高亮和链接的详情文本
+const EnhancedDetail: React.FC<{ detail: string; contributors: string[] }> = ({ detail, contributors }) => {
     if (!detail) return <div className="text-default-700 mb-3">摘要正文为空，无法加载数据 😭😭😭</div>;
 
     // 创建正则表达式来匹配所有参与者名称
-    const highlightText = (text: string, names: string[]): React.ReactNode[] => {
-        if (names.length === 0) {
-            return [text];
-        }
+    const enhanceText = (text: string, names: string[]): React.ReactNode[] => {
+        if (!text) return [];
 
-        // 转义特殊字符并创建正则表达式
+        // 转义特殊字符并创建正则表达式来匹配参与者名称
         const escapedNames = names.map(name => name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-        const regex = new RegExp(`(${escapedNames.join("|")})`, "g");
-        const parts = text.split(regex);
+        const nameRegex = new RegExp(`(${escapedNames.join("|")})`, "g");
 
-        return parts.map((part, index) => {
+        // 创建正则表达式来匹配URL链接
+        const urlRegex =
+            /(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})/gi;
+
+        // 先分割文本为名称和非名称部分
+        const nameParts = text.split(nameRegex);
+
+        // 对每个部分进一步处理链接
+        const finalParts: React.ReactNode[] = [];
+
+        nameParts.forEach((part, partIndex) => {
             // 检查这个部分是否是参与者名称
             const contributorIndex = names.indexOf(part);
 
             if (contributorIndex !== -1) {
-                return (
+                // 如果是参与者名称，直接返回Chip组件
+                finalParts.push(
                     <Chip
-                        key={index}
+                        key={`name-${partIndex}`}
                         className="mx-1"
                         size="sm"
                         style={{
@@ -100,13 +132,41 @@ const HighlightedDetail: React.FC<{ detail: string; contributors: string[] }> = 
                         {part}
                     </Chip>
                 );
-            }
+            } else {
+                // 如果不是参与者名称，则处理链接
+                if (typeof part === "string") {
+                    const urlParts = part.split(urlRegex);
 
-            return part;
+                    urlParts.forEach((urlPart, urlPartIndex) => {
+                        // 检查这个部分是否是URL
+                        if (urlPart.match(urlRegex)) {
+                            finalParts.push(
+                                <Link
+                                    key={`link-${partIndex}-${urlPartIndex}`}
+                                    isExternal
+                                    showAnchorIcon
+                                    anchorIcon={<AnchorIcon />}
+                                    className="inline-flex items-center gap-1 mx-1"
+                                    href={urlPart}
+                                    underline="always"
+                                >
+                                    {urlPart}
+                                </Link>
+                            );
+                        } else {
+                            finalParts.push(urlPart);
+                        }
+                    });
+                } else {
+                    finalParts.push(part);
+                }
+            }
         });
+
+        return finalParts;
     };
 
-    return <div className="text-default-700 mb-3">{highlightText(detail, contributors)}</div>;
+    return <div className="text-default-700 mb-3">{enhanceText(detail, contributors)}</div>;
 };
 
 export default function LatestTopicsPage() {
@@ -542,7 +602,7 @@ export default function LatestTopicsPage() {
                                                         </div>
                                                     </CardHeader>
                                                     <CardBody className="relative pb-9">
-                                                        <HighlightedDetail
+                                                        <EnhancedDetail
                                                             contributors={contributorsArray}
                                                             detail={topic.detail}
                                                         />
