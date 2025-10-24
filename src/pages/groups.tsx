@@ -231,7 +231,7 @@ export default function GroupsPage() {
                 <Card className="mt-6">
                     <CardHeader>
                         <div className="flex justify-between items-center w-full p-3">
-                            <h3 className="text-lg font-bold">群组列表</h3>
+                            <h3 className="text-lg font-bold">群组列表 ({Object.entries(groups).length})</h3>
                             <Button
                                 color="primary"
                                 isLoading={isLoading}
