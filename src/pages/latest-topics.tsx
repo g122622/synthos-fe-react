@@ -444,7 +444,7 @@ export default function LatestTopicsPage() {
                 <Card className="mt-6">
                     <CardHeader className="flex flex-col md:flex-row justify-between items-center pl-7 pr-7 gap-4">
                         <div className="flex flex-col md:flex-row items-center gap-4">
-                            <h2 className="text-xl font-bold">话题列表</h2>
+                            <h2 className="text-xl font-bold">话题列表 ({filteredTopics.length})</h2>
                             <Input
                                 isClearable
                                 aria-label="全文搜索"
@@ -487,7 +487,7 @@ export default function LatestTopicsPage() {
                                     isSelected={filterFavorite}
                                     onValueChange={setFilterFavorite}
                                 >
-                                    筛选收藏
+                                    只看收藏
                                 </Checkbox>
 
                                 {/* 日期选择器 + 刷新按钮 */}
