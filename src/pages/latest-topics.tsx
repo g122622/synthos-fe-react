@@ -538,7 +538,14 @@ export default function LatestTopicsPage() {
                                                     key={`${topic.topicId}-${index}`}
                                                     className="border border-default-200"
                                                 >
-                                                    <CardHeader className="flex flex-col gap-2">
+                                                    <CardHeader className="flex flex-col gap-2 relative">
+                                                        <Chip
+                                                            className="absolute top-3.5 left-4"
+                                                            size="sm"
+                                                            variant="flat"
+                                                        >
+                                                            #{index + 1}
+                                                        </Chip>
                                                         <div className="flex justify-between items-start">
                                                             <h3 className="text-lg font-bold">{topic.topic}</h3>
                                                             <Tooltip
