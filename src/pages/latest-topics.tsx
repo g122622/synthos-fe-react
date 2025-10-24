@@ -544,7 +544,7 @@ export default function LatestTopicsPage() {
                                                             size="sm"
                                                             variant="flat"
                                                         >
-                                                            #{index + 1}
+                                                            #{(page - 1) * topicsPerPage + index + 1}
                                                         </Chip>
                                                         <div className="flex justify-between items-start">
                                                             <h3 className="text-lg font-bold">{topic.topic}</h3>
