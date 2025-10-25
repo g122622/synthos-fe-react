@@ -73,10 +73,10 @@ const generateColorFromInterestScore = (interestScore: number, shouldContainAlph
     const hue = 60 + 60 * interestScore; // score ∈ [-1, 1] → hue ∈ [0, 120]
 
     if (!shouldContainAlpha) {
-        return `hsl(${hue}, 70%, 40%)`;
+        return `hsl(${hue}, 90%, 40%)`;
     }
 
-    return `hsla(${hue}, 70%, 40%, 0.1)`;
+    return `hsla(${hue}, 90%, 40%, 0.1)`;
 };
 
 // 创建一个自定义图标组件用于链接
