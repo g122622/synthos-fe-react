@@ -195,6 +195,7 @@ export default function LatestTopicsPage() {
     // 筛选状态
     const [filterRead, setFilterRead] = useState<boolean>(true); // 过滤已读
     const [filterFavorite, setFilterFavorite] = useState<boolean>(false); // 筛选收藏
+    const [sortByInterest, setSortByInterest] = useState<boolean>(false); // 按兴趣度排序
     const [searchText, setSearchText] = useState<string>(""); // 全文搜索
 
     // 默认时间范围：最近7天
@@ -420,7 +421,38 @@ export default function LatestTopicsPage() {
 
     // 分页处理
     const totalPages = Math.ceil(filteredTopics.length / topicsPerPage);
-    const currentTopics = filteredTopics.slice((page - 1) * topicsPerPage, page * topicsPerPage);
+
+    // 如果按兴趣度排序，则对filteredTopics进行排序
+    const sortedTopics = useMemo(() => {
+        if (!sortByInterest) {
+            return filteredTopics;
+        }
+
+        return [...filteredTopics].sort((a, b) => {
+            const scoreA = interestScores[a.topicId];
+            const scoreB = interestScores[b.topicId];
+
+            // 如果两个话题都有兴趣得分，按得分降序排列
+            if (scoreA !== undefined && scoreB !== undefined) {
+                return scoreB - scoreA;
+            }
+
+            // 如果只有A有得分，A排在前面
+            if (scoreA !== undefined && scoreB === undefined) {
+                return -1;
+            }
+
+            // 如果只有B有得分，B排在前面
+            if (scoreA === undefined && scoreB !== undefined) {
+                return 1;
+            }
+
+            // 如果都没有得分，保持原有顺序
+            return 0;
+        });
+    }, [filteredTopics, sortByInterest, interestScores]);
+
+    const currentTopics = sortedTopics.slice((page - 1) * topicsPerPage, page * topicsPerPage);
 
     // 标记话题为已读
     const markAsRead = async (topicId: string) => {
@@ -542,16 +574,24 @@ export default function LatestTopicsPage() {
                                     <span className="text-default-900 text-sm w-30">{topicsPerPage} 张卡片</span>
                                 </div>
 
-                                <Checkbox className="w-100" isSelected={filterRead} onValueChange={setFilterRead}>
+                                <Checkbox className="w-110" isSelected={filterRead} onValueChange={setFilterRead}>
                                     过滤已读
                                 </Checkbox>
 
                                 <Checkbox
-                                    className="w-100"
+                                    className="w-110"
                                     isSelected={filterFavorite}
                                     onValueChange={setFilterFavorite}
                                 >
                                     只看收藏
+                                </Checkbox>
+
+                                <Checkbox
+                                    className="w-150"
+                                    isSelected={sortByInterest}
+                                    onValueChange={setSortByInterest}
+                                >
+                                    按兴趣度排序
                                 </Checkbox>
 
                                 {/* 日期选择器 + 刷新按钮 */}
