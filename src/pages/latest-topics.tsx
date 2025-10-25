@@ -18,6 +18,7 @@ import {
     getSessionTimeDuration,
     getAIDigestResultsBySessionId
 } from "@/services/api";
+import { getInterestScoreResult, isInterestScoreResultExist } from "@/services/interestScoreApi";
 import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
 import TopicReadStatusManager from "@/util/TopicReadStatusManager";
@@ -176,6 +177,7 @@ export default function LatestTopicsPage() {
     const [topicsPerPage, setTopicsPerPage] = useState<number>(6); // 将topicsPerPage改为状态
     const [readTopics, setReadTopics] = useState<Record<string, boolean>>({});
     const [favoriteTopics, setFavoriteTopics] = useState<Record<string, boolean>>({}); // 收藏状态
+    const [interestScores, setInterestScores] = useState<Record<string, number>>({}); // 兴趣得分状态
 
     // 筛选状态
     const [filterRead, setFilterRead] = useState<boolean>(true); // 过滤已读
@@ -221,6 +223,40 @@ export default function LatestTopicsPage() {
 
         initReadStatus();
     }, []);
+
+    // 获取话题的兴趣得分
+    const fetchInterestScore = async (topicId: string): Promise<number | null> => {
+        try {
+            // 先检查兴趣得分结果是否存在
+            const existResponse = await isInterestScoreResultExist(topicId);
+
+            if (!existResponse.success) {
+                console.error("检查兴趣得分结果是否存在失败:", existResponse.message);
+
+                return null;
+            }
+
+            if (!existResponse.data.isExist) {
+                // 如果不存在，返回null或默认值
+                return null;
+            }
+
+            // 如果存在，获取兴趣得分结果
+            const scoreResponse = await getInterestScoreResult(topicId);
+
+            if (!scoreResponse.success) {
+                console.error("获取兴趣得分结果失败:", scoreResponse.message);
+
+                return null;
+            }
+
+            return scoreResponse.data;
+        } catch (error) {
+            console.error("获取话题兴趣得分失败:", error);
+
+            return null;
+        }
+    };
 
     // 获取最新话题数据（带时间范围）
     const fetchLatestTopics = async (start: Date, end: Date) => {
@@ -305,7 +341,22 @@ export default function LatestTopicsPage() {
                 }
             }
 
-            setTopics(allTopics);
+            // 获取每个话题的兴趣得分
+            const topicsWithScores = [...allTopics];
+            const scoreMap: Record<string, number> = {};
+
+            for (const topic of allTopics) {
+                const score = await fetchInterestScore(topic.topicId);
+
+                if (score) {
+                    scoreMap[topic.topicId] = score;
+                }
+            }
+
+            console.log(scoreMap);
+
+            setInterestScores(scoreMap);
+            setTopics(topicsWithScores);
         } catch (error) {
             console.error("获取最新话题失败:", error);
         } finally {
@@ -546,7 +597,24 @@ export default function LatestTopicsPage() {
                                                         >
                                                             #{(page - 1) * topicsPerPage + index + 1}
                                                         </Chip>
+                                                        {interestScores[topic.topicId] !== undefined && (
+                                                            <Chip
+                                                                className="absolute top-3.5 right-4"
+                                                                color={
+                                                                    interestScores[topic.topicId] > 0
+                                                                        ? "success"
+                                                                        : interestScores[topic.topicId] < 0
+                                                                          ? "danger"
+                                                                          : "default"
+                                                                }
+                                                                size="sm"
+                                                                variant="flat"
+                                                            >
+                                                                兴趣分: {interestScores[topic.topicId].toFixed(2)}
+                                                            </Chip>
+                                                        )}
                                                         <div className="flex justify-between items-start">
+                                                            {/* 正文部分 */}
                                                             <h3 className="text-lg font-bold">{topic.topic}</h3>
                                                             <Tooltip
                                                                 color="default"
