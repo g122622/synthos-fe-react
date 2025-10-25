@@ -66,6 +66,19 @@ const generateColorFromName = (name: string, shouldContainAlpha: boolean = true)
     return `hsla(${hue}, 70%, 40%, 0.1)`;
 };
 
+const generateColorFromInterestScore = (interestScore: number, shouldContainAlpha: boolean = true): string => {
+    interestScore *= 4; // 放大，让效果更明显
+
+    // 将 score 映射到 [0, 120] 的 hue 值：-1 → 0°（红），0 → 60°（黄），1 → 120°（绿）
+    const hue = 60 + 60 * interestScore; // score ∈ [-1, 1] → hue ∈ [0, 120]
+
+    if (!shouldContainAlpha) {
+        return `hsl(${hue}, 70%, 40%)`;
+    }
+
+    return `hsla(${hue}, 70%, 40%, 0.1)`;
+};
+
 // 创建一个自定义图标组件用于链接
 const AnchorIcon = (props: React.SVGProps<SVGSVGElement>) => {
     return (
@@ -590,6 +603,7 @@ export default function LatestTopicsPage() {
                                                     className="border border-default-200"
                                                 >
                                                     <CardHeader className="flex flex-col gap-2 relative">
+                                                        {/* item顺序号 */}
                                                         <Chip
                                                             className="absolute top-3.5 left-4"
                                                             size="sm"
@@ -597,6 +611,7 @@ export default function LatestTopicsPage() {
                                                         >
                                                             #{(page - 1) * topicsPerPage + index + 1}
                                                         </Chip>
+                                                        {/* 兴趣指数 */}
                                                         {interestScores[topic.topicId] !== undefined && (
                                                             <Chip
                                                                 className="absolute top-3.5 right-4"
@@ -607,6 +622,16 @@ export default function LatestTopicsPage() {
                                                                           ? "danger"
                                                                           : "default"
                                                                 }
+                                                                style={{
+                                                                    backgroundColor: generateColorFromInterestScore(
+                                                                        interestScores[topic.topicId],
+                                                                        true
+                                                                    ),
+                                                                    color: generateColorFromInterestScore(
+                                                                        interestScores[topic.topicId],
+                                                                        false
+                                                                    )
+                                                                }}
                                                                 size="sm"
                                                                 variant="flat"
                                                             >
