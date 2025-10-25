@@ -14,7 +14,11 @@ import DefaultLayout from "@/layouts/default";
 export default function GroupsPage() {
     const [groups, setGroups] = useState<GroupDetailsRecord>({});
     const [recentMessageCounts, setRecentMessageCounts] = useState<Record<string, number>>({});
+    const [totalRecentMessageCount, setTotalRecentMessageCount] = useState<number>(0);
+    const [totalHourlyCounts, setTotalHourlyCounts] = useState<number[]>(new Array(24).fill(0));
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const totalChartRef = useRef<HTMLDivElement | null>(null);
+    const totalChartInstance = useRef<echarts.EChartsType | null>(null);
     const chartRefs = useRef<Record<string, HTMLDivElement | null>>({});
     const chartInstances = useRef<Record<string, echarts.EChartsType | null>>({});
 
@@ -32,6 +36,61 @@ export default function GroupsPage() {
             const chartInstance = echarts.init(chartRef);
 
             chartInstances.current[groupId] = chartInstance;
+
+            // 生成X轴标签
+            const xLabels = generateHourlyTimestamps().slice(0, 24).map(formatHour);
+
+            // 图表配置
+            const option = {
+                tooltip: {
+                    trigger: "axis"
+                },
+                xAxis: {
+                    type: "category",
+                    data: xLabels,
+                    axisLabel: {
+                        rotate: 45,
+                        fontSize: 10
+                    }
+                },
+                yAxis: {
+                    type: "value"
+                },
+                series: [
+                    {
+                        data: hourlyData,
+                        type: "line",
+                        smooth: true,
+                        areaStyle: {}
+                    }
+                ],
+                grid: {
+                    left: "10%",
+                    right: "10%",
+                    top: "10%",
+                    bottom: "20%"
+                }
+            };
+
+            // 设置图表配置
+            chartInstance.setOption(option);
+        }
+    };
+
+    // 渲染总计消息量走势图表
+    const renderTotalMessageTrendChart = (hourlyData: number[]) => {
+        const chartRef = totalChartRef.current;
+
+        if (chartRef) {
+            // 如果图表实例已存在，先销毁
+            if (totalChartInstance.current) {
+                totalChartInstance.current?.dispose();
+            }
+
+            // 初始化图表实例
+            const chartInstance = echarts.init(chartRef);
+
+            totalChartInstance.current = chartInstance;
 
             // 生成X轴标签
             const xLabels = generateHourlyTimestamps().slice(0, 24).map(formatHour);
@@ -164,11 +223,31 @@ export default function GroupsPage() {
 
             await Promise.all(promises);
             setRecentMessageCounts(counts);
+
+            // 计算总计数据
+            const totalCount = Object.values(counts).reduce((sum, count) => sum + count, 0);
+
+            setTotalRecentMessageCount(totalCount);
+
+            // 计算总小时数据
+            const totalHourlyData = new Array(24).fill(0);
+
+            Object.values(hourlyCounts).forEach(groupHourlyData => {
+                groupHourlyData.forEach((count, index) => {
+                    totalHourlyData[index] += count;
+                });
+            });
+            setTotalHourlyCounts(totalHourlyData);
+
             // 保存每小时消息量用于图表渲染
             (window as any).hourlyCounts = hourlyCounts;
 
             // 在数据加载完成后渲染图表
             setTimeout(() => {
+                // 渲染总计图表
+                renderTotalMessageTrendChart(totalHourlyData);
+
+                // 渲染各群组图表
                 Object.keys(hourlyCounts).forEach(groupId => {
                     const chartRef = chartRefs.current[groupId];
 
@@ -260,6 +339,25 @@ export default function GroupsPage() {
                                     <TableColumn>最近24小时消息量走势</TableColumn>
                                 </TableHeader>
                                 <TableBody emptyContent={"未找到群组信息"}>
+                                    {/* 总计行 */}
+                                    <TableRow key="total">
+                                        <TableCell>
+                                            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                                                <span className="font-bold">总计</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="font-semibold">所有群组</TableCell>
+                                        <TableCell>-</TableCell>
+                                        <TableCell>-</TableCell>
+                                        <TableCell>-</TableCell>
+                                        <TableCell>-</TableCell>
+                                        <TableCell>
+                                            <span className="font-semibold">{totalRecentMessageCount}</span>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div ref={totalChartRef} style={{ width: "300px", height: "100px" }} />
+                                        </TableCell>
+                                    </TableRow>
                                     {Object.entries(groups).map(([groupId, groupDetail]) => (
                                         <TableRow key={groupId}>
                                             <TableCell>
