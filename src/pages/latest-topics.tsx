@@ -116,8 +116,7 @@ const EnhancedDetail: React.FC<{ detail: string; contributors: string[] }> = ({ 
         const nameRegex = new RegExp(`(${escapedNames.join("|")})`, "g");
 
         // 创建正则表达式来匹配URL链接
-        const urlRegex =
-            /(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})/gi;
+        const urlRegex = /((?:https?|ftp):\/\/[^\s\u0080-\uFFFF]+)/gi;
 
         // 先分割文本为名称和非名称部分
         const nameParts = text.split(nameRegex);
@@ -566,7 +565,7 @@ export default function LatestTopicsPage() {
                                         maxValue={12}
                                         minValue={3}
                                         showTooltip={true}
-                                        size="lg"
+                                        size="md"
                                         step={3}
                                         value={topicsPerPage}
                                         onChange={setTopicsPerPage}
@@ -575,7 +574,7 @@ export default function LatestTopicsPage() {
                                 </div>
 
                                 <Checkbox className="w-110" isSelected={filterRead} onValueChange={setFilterRead}>
-                                    过滤已读
+                                    只看未读
                                 </Checkbox>
 
                                 <Checkbox
@@ -680,7 +679,9 @@ export default function LatestTopicsPage() {
                                                         )}
                                                         <div className="flex justify-between items-start">
                                                             {/* 正文部分 */}
-                                                            <h3 className="text-lg font-bold">{topic.topic}</h3>
+                                                            <h3 className="text-lg font-bold max-w-70">
+                                                                {topic.topic}
+                                                            </h3>
                                                             <Tooltip
                                                                 color="default"
                                                                 content="复制话题内容"
