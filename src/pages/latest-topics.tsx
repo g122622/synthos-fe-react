@@ -626,8 +626,8 @@ export default function LatestTopicsPage() {
                                                                 className="absolute top-3.5 right-4"
                                                                 color={interestScores[topic.topicId] > 0 ? "success" : interestScores[topic.topicId] < 0 ? "danger" : "default"}
                                                                 style={{
-                                                                    backgroundColor: generateColorFromInterestScore(interestScores[topic.topicId], true),
-                                                                    color: generateColorFromInterestScore(interestScores[topic.topicId], false)
+                                                                    backgroundColor: generateColorFromInterestScore(interestScores[topic.topicId], false),
+                                                                    color: "white"
                                                                 }}
                                                                 size="sm"
                                                                 variant="flat"
