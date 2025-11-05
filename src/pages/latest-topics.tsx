@@ -12,12 +12,7 @@ import { MoreVertical, Check, Copy, Search, Star } from "lucide-react";
 import { today, getLocalTimeZone } from "@internationalized/date";
 import { Slider } from "@heroui/slider"; // 引入Slider组件
 
-import {
-    getGroupDetails,
-    getSessionIdsByGroupIdAndTimeRange,
-    getSessionTimeDuration,
-    getAIDigestResultsBySessionId
-} from "@/services/api";
+import { getGroupDetails, getSessionIdsByGroupIdAndTimeRange, getSessionTimeDuration, getAIDigestResultsBySessionId } from "@/services/api";
 import { getInterestScoreResult, isInterestScoreResultExist } from "@/services/interestScoreApi";
 import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
@@ -82,15 +77,7 @@ const generateColorFromInterestScore = (interestScore: number, shouldContainAlph
 // 创建一个自定义图标组件用于链接
 const AnchorIcon = (props: React.SVGProps<SVGSVGElement>) => {
     return (
-        <svg
-            aria-hidden="true"
-            focusable="false"
-            height="16"
-            role="presentation"
-            viewBox="0 0 24 24"
-            width="16"
-            {...props}
-        >
+        <svg aria-hidden="true" focusable="false" height="16" role="presentation" viewBox="0 0 24 24" width="16" {...props}>
             <path
                 d="M8.465,11.293c1.133-1.133,3.109-1.133,4.242,0L13.414,12l1.414-1.414l-0.707-0.707c-0.943-0.944-2.199-1.465-3.535-1.465 S7.994,8.935,7.051,9.879L4.929,12c-1.948,1.949-1.948,5.122,0,7.071c0.975,0.975,2.255,1.462,3.535,1.462 c1.281,0,2.562-0.487,3.536-1.462l0.707-0.707l-1.414-1.414l-0.707,0.707c-1.17,1.167-3.073,1.169-4.243,0 c-1.169-1.17-1.169-3.073,0-4.243L8.465,11.293z"
                 fill="currentColor"
@@ -308,8 +295,7 @@ export default function LatestTopicsPage() {
                 }
             }
 
-            const sessionWithDuration: { sessionId: string; timeStart: number; timeEnd: number; groupId: string }[] =
-                [];
+            const sessionWithDuration: { sessionId: string; timeStart: number; timeEnd: number; groupId: string }[] = [];
 
             for (const { sessionId, groupId } of allSessionIds) {
                 try {
@@ -408,11 +394,10 @@ export default function LatestTopicsPage() {
             const topicMatch = topic?.topic?.toLowerCase()?.includes(searchTextLower);
             const detailMatch = topic?.detail?.toLowerCase()?.includes(searchTextLower);
             const contributorsArray = parseContributors(topic?.contributors);
-            const contributorMatch = contributorsArray.some(contributor =>
-                contributor.toLowerCase().includes(searchTextLower)
-            );
+            const contributorMatch = contributorsArray.some(contributor => contributor.toLowerCase().includes(searchTextLower));
+            const groupIdMatch = topic?.groupId?.toLowerCase()?.includes(searchTextLower);
 
-            return topicMatch || detailMatch || contributorMatch;
+            return topicMatch || detailMatch || contributorMatch || groupIdMatch;
         }
 
         return true;
@@ -577,19 +562,11 @@ export default function LatestTopicsPage() {
                                     只看未读
                                 </Checkbox>
 
-                                <Checkbox
-                                    className="w-110"
-                                    isSelected={filterFavorite}
-                                    onValueChange={setFilterFavorite}
-                                >
+                                <Checkbox className="w-110" isSelected={filterFavorite} onValueChange={setFilterFavorite}>
                                     只看收藏
                                 </Checkbox>
 
-                                <Checkbox
-                                    className="w-150"
-                                    isSelected={sortByInterest}
-                                    onValueChange={setSortByInterest}
-                                >
+                                <Checkbox className="w-150" isSelected={sortByInterest} onValueChange={setSortByInterest}>
                                     按兴趣度排序
                                 </Checkbox>
 
@@ -637,39 +614,20 @@ export default function LatestTopicsPage() {
                                             const contributorsArray = parseContributors(topic.contributors);
 
                                             return (
-                                                <Card
-                                                    key={`${topic.topicId}-${index}`}
-                                                    className="border border-default-200"
-                                                >
+                                                <Card key={`${topic.topicId}-${index}`} className="border border-default-200">
                                                     <CardHeader className="flex flex-col gap-2 relative">
                                                         {/* item顺序号 */}
-                                                        <Chip
-                                                            className="absolute top-3.5 left-4"
-                                                            size="sm"
-                                                            variant="flat"
-                                                        >
+                                                        <Chip className="absolute top-3.5 left-4" size="sm" variant="flat">
                                                             #{(page - 1) * topicsPerPage + index + 1}
                                                         </Chip>
                                                         {/* 兴趣指数 */}
                                                         {interestScores[topic.topicId] !== undefined && (
                                                             <Chip
                                                                 className="absolute top-3.5 right-4"
-                                                                color={
-                                                                    interestScores[topic.topicId] > 0
-                                                                        ? "success"
-                                                                        : interestScores[topic.topicId] < 0
-                                                                          ? "danger"
-                                                                          : "default"
-                                                                }
+                                                                color={interestScores[topic.topicId] > 0 ? "success" : interestScores[topic.topicId] < 0 ? "danger" : "default"}
                                                                 style={{
-                                                                    backgroundColor: generateColorFromInterestScore(
-                                                                        interestScores[topic.topicId],
-                                                                        true
-                                                                    ),
-                                                                    color: generateColorFromInterestScore(
-                                                                        interestScores[topic.topicId],
-                                                                        false
-                                                                    )
+                                                                    backgroundColor: generateColorFromInterestScore(interestScores[topic.topicId], true),
+                                                                    color: generateColorFromInterestScore(interestScores[topic.topicId], false)
                                                                 }}
                                                                 size="sm"
                                                                 variant="flat"
@@ -679,14 +637,8 @@ export default function LatestTopicsPage() {
                                                         )}
                                                         <div className="flex justify-between items-start">
                                                             {/* 正文部分 */}
-                                                            <h3 className="text-lg font-bold max-w-70">
-                                                                {topic.topic}
-                                                            </h3>
-                                                            <Tooltip
-                                                                color="default"
-                                                                content="复制话题内容"
-                                                                placement="top"
-                                                            >
+                                                            <h3 className="text-lg font-bold max-w-70">{topic.topic}</h3>
+                                                            <Tooltip color="default" content="复制话题内容" placement="top">
                                                                 <HeroUIButton
                                                                     isIconOnly
                                                                     size="sm"
@@ -743,10 +695,7 @@ export default function LatestTopicsPage() {
                                                         </div>
                                                     </CardHeader>
                                                     <CardBody className="relative pb-9">
-                                                        <EnhancedDetail
-                                                            contributors={contributorsArray}
-                                                            detail={topic.detail}
-                                                        />
+                                                        <EnhancedDetail contributors={contributorsArray} detail={topic.detail} />
                                                         {/* 在左下角添加群ID的Chip和群头像 */}
                                                         <div className="absolute bottom-3 left-3 flex items-center gap-2">
                                                             <img
@@ -778,28 +727,20 @@ export default function LatestTopicsPage() {
                                                                         <div className="flex flex-col gap-1">
                                                                             <p className="font-medium">参与者</p>
                                                                             <div className="flex flex-wrap gap-1">
-                                                                                {contributorsArray.map(
-                                                                                    (contributor, idx) => (
-                                                                                        <Chip
-                                                                                            key={idx}
-                                                                                            size="sm"
-                                                                                            style={{
-                                                                                                backgroundColor:
-                                                                                                    generateColorFromName(
-                                                                                                        contributor
-                                                                                                    ),
-                                                                                                color: generateColorFromName(
-                                                                                                    contributor,
-                                                                                                    false
-                                                                                                ),
-                                                                                                fontWeight: "bold"
-                                                                                            }}
-                                                                                            variant="flat"
-                                                                                        >
-                                                                                            {contributor}
-                                                                                        </Chip>
-                                                                                    )
-                                                                                )}
+                                                                                {contributorsArray.map((contributor, idx) => (
+                                                                                    <Chip
+                                                                                        key={idx}
+                                                                                        size="sm"
+                                                                                        style={{
+                                                                                            backgroundColor: generateColorFromName(contributor),
+                                                                                            color: generateColorFromName(contributor, false),
+                                                                                            fontWeight: "bold"
+                                                                                        }}
+                                                                                        variant="flat"
+                                                                                    >
+                                                                                        {contributor}
+                                                                                    </Chip>
+                                                                                ))}
                                                                             </div>
                                                                         </div>
                                                                     </DropdownItem>
@@ -823,45 +764,14 @@ export default function LatestTopicsPage() {
                                                                     </DropdownItem>
                                                                 </DropdownMenu>
                                                             </Dropdown>
-                                                            <Tooltip
-                                                                color="warning"
-                                                                content={
-                                                                    favoriteTopics[topic.topicId]
-                                                                        ? "取消收藏"
-                                                                        : "添加收藏"
-                                                                }
-                                                                placement="top"
-                                                            >
-                                                                <HeroUIButton
-                                                                    isIconOnly
-                                                                    color="warning"
-                                                                    size="sm"
-                                                                    variant="flat"
-                                                                    onPress={() => toggleFavorite(topic.topicId)}
-                                                                >
-                                                                    <Star
-                                                                        fill={
-                                                                            favoriteTopics[topic.topicId]
-                                                                                ? "currentColor"
-                                                                                : "none"
-                                                                        }
-                                                                        size={16}
-                                                                    />
+                                                            <Tooltip color="warning" content={favoriteTopics[topic.topicId] ? "取消收藏" : "添加收藏"} placement="top">
+                                                                <HeroUIButton isIconOnly color="warning" size="sm" variant="flat" onPress={() => toggleFavorite(topic.topicId)}>
+                                                                    <Star fill={favoriteTopics[topic.topicId] ? "currentColor" : "none"} size={16} />
                                                                 </HeroUIButton>
                                                             </Tooltip>
                                                             {!readTopics[topic.topicId] && (
-                                                                <Tooltip
-                                                                    color="primary"
-                                                                    content="标记为已读"
-                                                                    placement="top"
-                                                                >
-                                                                    <HeroUIButton
-                                                                        isIconOnly
-                                                                        color="primary"
-                                                                        size="sm"
-                                                                        variant="flat"
-                                                                        onPress={() => markAsRead(topic.topicId)}
-                                                                    >
+                                                                <Tooltip color="primary" content="标记为已读" placement="top">
+                                                                    <HeroUIButton isIconOnly color="primary" size="sm" variant="flat" onPress={() => markAsRead(topic.topicId)}>
                                                                         <Check size={16} />
                                                                     </HeroUIButton>
                                                                 </Tooltip>
@@ -876,14 +786,7 @@ export default function LatestTopicsPage() {
 
                                 {totalPages > 1 && (
                                     <div className="flex justify-center mt-4">
-                                        <Pagination
-                                            showControls
-                                            color="primary"
-                                            page={page}
-                                            size="md"
-                                            total={totalPages}
-                                            onChange={setPage}
-                                        />
+                                        <Pagination showControls color="primary" page={page} size="md" total={totalPages} onChange={setPage} />
                                     </div>
                                 )}
                             </div>
