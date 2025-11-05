@@ -600,7 +600,7 @@ export default function LatestTopicsPage() {
                         </div>
                     </CardHeader>
 
-                    <CardBody>
+                    <CardBody className="relative">
                         {loading ? (
                             <div className="flex justify-center items-center h-64">
                                 <Spinner size="lg" />
@@ -625,11 +625,11 @@ export default function LatestTopicsPage() {
                                                             <Chip
                                                                 className="absolute top-3.5 right-4"
                                                                 color={interestScores[topic.topicId] > 0 ? "success" : interestScores[topic.topicId] < 0 ? "danger" : "default"}
+                                                                size="sm"
                                                                 style={{
                                                                     backgroundColor: generateColorFromInterestScore(interestScores[topic.topicId], false),
                                                                     color: "white"
                                                                 }}
-                                                                size="sm"
                                                                 variant="flat"
                                                             >
                                                                 {interestScores[topic.topicId].toFixed(2)}
@@ -806,6 +806,57 @@ export default function LatestTopicsPage() {
                                 >
                                     重新加载
                                 </Button>
+                            </div>
+                        )}
+
+                        {/* 整页已读按钮 - 固定在右下角 */}
+                        {!loading && currentTopics.length > 0 && currentTopics.some(topic => !readTopics[topic.topicId]) && (
+                            <div className="absolute bottom-4 right-4">
+                                <Tooltip color="primary" content="将当前页面所有未读话题标记为已读" placement="top">
+                                    <Button
+                                        color="primary"
+                                        size="sm"
+                                        startContent={<Check size={16} />}
+                                        variant="flat"
+                                        onPress={async () => {
+                                            const unreadTopics = currentTopics.filter(topic => !readTopics[topic.topicId]);
+
+                                            try {
+                                                // 批量标记为已读
+                                                const readStatusManager = TopicReadStatusManager.getInstance();
+
+                                                for (const topic of unreadTopics) {
+                                                    await readStatusManager.markAsRead(topic.topicId);
+                                                }
+
+                                                // 更新本地状态
+                                                const newReadTopics = { ...readTopics };
+
+                                                unreadTopics.forEach(topic => {
+                                                    newReadTopics[topic.topicId] = true;
+                                                });
+                                                setReadTopics(newReadTopics);
+
+                                                addToast({
+                                                    title: "批量标记成功",
+                                                    description: `已将 ${unreadTopics.length} 个话题标记为已读`,
+                                                    color: "success",
+                                                    variant: "flat"
+                                                });
+                                            } catch (error) {
+                                                console.error("Failed to mark all topics as read:", error);
+                                                addToast({
+                                                    title: "批量标记失败",
+                                                    description: "无法标记所有话题为已读",
+                                                    color: "danger",
+                                                    variant: "flat"
+                                                });
+                                            }
+                                        }}
+                                    >
+                                        整页已读
+                                    </Button>
+                                </Tooltip>
                             </div>
                         )}
                     </CardBody>
