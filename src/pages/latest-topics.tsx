@@ -632,7 +632,7 @@ export default function LatestTopicsPage() {
                                                                 size="sm"
                                                                 variant="flat"
                                                             >
-                                                                兴趣分: {interestScores[topic.topicId].toFixed(2)}
+                                                                {interestScores[topic.topicId].toFixed(2)}
                                                             </Chip>
                                                         )}
                                                         <div className="flex justify-between items-start">
