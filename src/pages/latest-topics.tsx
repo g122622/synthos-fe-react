@@ -396,8 +396,9 @@ export default function LatestTopicsPage() {
             const contributorsArray = parseContributors(topic?.contributors);
             const contributorMatch = contributorsArray.some(contributor => contributor.toLowerCase().includes(searchTextLower));
             const groupIdMatch = topic?.groupId?.toLowerCase()?.includes(searchTextLower);
+            const sessionIdMatch = topic?.sessionId?.toLowerCase()?.includes(searchTextLower);
 
-            return topicMatch || detailMatch || contributorMatch || groupIdMatch;
+            return topicMatch || detailMatch || contributorMatch || groupIdMatch || sessionIdMatch;
         }
 
         return true;
