@@ -6,7 +6,7 @@ import { Pagination } from "@heroui/pagination";
 import { Spinner } from "@heroui/spinner";
 import { Chip } from "@heroui/chip";
 import { ScrollShadow } from "@heroui/scroll-shadow";
-import { DateRangePicker, Tooltip, Input, Checkbox, Popover, PopoverTrigger, PopoverContent } from "@heroui/react";
+import { DateRangePicker, Tooltip, Input, Checkbox } from "@heroui/react";
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@heroui/dropdown";
 import { Button as HeroUIButton } from "@heroui/button";
 import { MoreVertical, Check, Copy, Search, Star } from "lucide-react";
@@ -17,8 +17,8 @@ import { generateColorFromName, parseContributors, generateColorFromInterestScor
 import TopicItem from "./types/TopicItem";
 import EnhancedDetail from "./components/EnhancedDetail";
 
-import { getGroupDetails, getSessionIdsByGroupIdAndTimeRange, getSessionTimeDuration, getAIDigestResultsBySessionId } from "@/services/api";
-import { getInterestScoreResult, isInterestScoreResultExist } from "@/services/interestScoreApi";
+import { getGroupDetails, getSessionIdsByGroupIdAndTimeRange, getSessionTimeDuration, getAIDigestResultsBySessionId } from "@/api/basicApi";
+import { getInterestScoreResult, isInterestScoreResultExist } from "@/api/interestScoreApi";
 import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
 import TopicReadStatusManager from "@/util/TopicReadStatusManager";

@@ -1,28 +1,6 @@
+import API_BASE_URL from "./constants/baseUrl";
+
 import fetchWrapper from "@/util/fetchWrapper";
-
-// API服务封装
-let API_BASE_URL = "";
-
-if (window.location.hostname === "localhost") {
-    API_BASE_URL = "http://localhost:3002";
-} else {
-    API_BASE_URL = `https://caliphal-neal-adverbially.ngrok-free.dev`;
-}
-
-// 通用响应格式
-interface BaseResponse {
-    success: boolean;
-}
-
-interface SuccessResponse<T> extends BaseResponse {
-    data: T;
-}
-
-interface ErrorResponse extends BaseResponse {
-    message: string;
-}
-
-type ApiResponse<T> = SuccessResponse<T> | ErrorResponse;
 
 // 健康检查接口
 export const healthCheck = async (): Promise<ApiResponse<{ message: string; timestamp: string }>> => {

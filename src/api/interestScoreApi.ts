@@ -1,20 +1,4 @@
-// 兴趣得分相关API服务
-const API_BASE_URL = "http://localhost:3002";
-
-// 通用响应格式
-interface BaseResponse {
-    success: boolean;
-}
-
-interface SuccessResponse<T> extends BaseResponse {
-    data: T;
-}
-
-interface ErrorResponse extends BaseResponse {
-    message: string;
-}
-
-type ApiResponse<T> = SuccessResponse<T> | ErrorResponse;
+import API_BASE_URL from "./constants/baseUrl";
 
 // 用户兴趣关键词接口
 interface UserInterest {

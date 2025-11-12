@@ -9,7 +9,7 @@ import { Spinner } from "@heroui/spinner";
 import { useAsyncList } from "@react-stately/data";
 import { today, getLocalTimeZone } from "@internationalized/date";
 
-import { getChatMessagesByGroupId, getGroupDetails } from "@/services/api";
+import { getChatMessagesByGroupId, getGroupDetails } from "@/api/basicApi";
 import { ChatMessage, GroupDetailsRecord } from "@/types/app";
 import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
@@ -106,9 +106,7 @@ export default function ChatMessagesPage() {
             <section className="flex flex-col gap-4 py-8 md:py-10">
                 <div className="flex flex-col items-center justify-center gap-4">
                     <h1 className={title()}>聊天记录管理</h1>
-                    <p className="text-default-600 max-w-2xl text-center">
-                        查看和筛选QQ群聊天记录，支持按时间范围和群组进行过滤
-                    </p>
+                    <p className="text-default-600 max-w-2xl text-center">查看和筛选QQ群聊天记录，支持按时间范围和群组进行过滤</p>
                 </div>
 
                 <Card className="mt-6">
@@ -189,32 +187,23 @@ export default function ChatMessagesPage() {
                                         <TableColumn>会话ID</TableColumn>
                                     </TableHeader>
                                     <TableBody emptyContent={"未找到相关聊天记录"}>
-                                        {list.items
-                                            .slice((currentPage - 1) * pageSize, currentPage * pageSize)
-                                            .map(message => (
-                                                <TableRow key={message.msgId}>
-                                                    <TableCell>
-                                                        <div className="flex flex-col">
-                                                            <span className="font-semibold">
-                                                                {message.senderGroupNickname || message.senderNickname}
-                                                            </span>
-                                                            <span className="text-sm text-default-500">
-                                                                {message.senderId}
-                                                            </span>
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <div
-                                                            className="max-w-md truncate"
-                                                            title={message.messageContent}
-                                                        >
-                                                            {message.messageContent}
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell>{formatTimestamp(message.timestamp)}</TableCell>
-                                                    <TableCell>{message.sessionId}</TableCell>
-                                                </TableRow>
-                                            ))}
+                                        {list.items.slice((currentPage - 1) * pageSize, currentPage * pageSize).map(message => (
+                                            <TableRow key={message.msgId}>
+                                                <TableCell>
+                                                    <div className="flex flex-col">
+                                                        <span className="font-semibold">{message.senderGroupNickname || message.senderNickname}</span>
+                                                        <span className="text-sm text-default-500">{message.senderId}</span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="max-w-md truncate" title={message.messageContent}>
+                                                        {message.messageContent}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>{formatTimestamp(message.timestamp)}</TableCell>
+                                                <TableCell>{message.sessionId}</TableCell>
+                                            </TableRow>
+                                        ))}
                                     </TableBody>
                                 </Table>
                             </>

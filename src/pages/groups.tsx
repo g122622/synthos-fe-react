@@ -6,7 +6,7 @@ import { Chip } from "@heroui/chip";
 import { Spinner } from "@heroui/spinner";
 import * as echarts from "echarts";
 
-import { getGroupDetails, getChatMessagesByGroupId } from "@/services/api";
+import { getGroupDetails, getChatMessagesByGroupId } from "@/api/basicApi";
 import { GroupDetailsRecord } from "@/types/app";
 import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";

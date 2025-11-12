@@ -7,7 +7,7 @@ import { Tabs, Tab } from "@heroui/tabs";
 import { Accordion, AccordionItem } from "@heroui/accordion";
 import { Spinner } from "@heroui/spinner";
 import { useAsyncList } from "@react-stately/data";
-import { getAIDigestResultsBySessionId, getAIDigestResultByTopicId, isSessionSummarized } from "@/services/api";
+import { getAIDigestResultsBySessionId, getAIDigestResultByTopicId, isSessionSummarized } from "@/api/basicApi";
 import { AIDigestResult } from "@/types/app";
 import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
@@ -109,9 +109,7 @@ export default function AIDigestPage() {
             <section className="flex flex-col gap-4 py-8 md:py-10">
                 <div className="flex flex-col items-center justify-center gap-4">
                     <h1 className={title()}>AI摘要结果</h1>
-                    <p className="text-default-600 max-w-2xl text-center">
-                        浏览AI生成的聊天摘要结果，支持按会话或主题查看详细内容
-                    </p>
+                    <p className="text-default-600 max-w-2xl text-center">浏览AI生成的聊天摘要结果，支持按会话或主题查看详细内容</p>
                 </div>
 
                 <Tabs aria-label="摘要查询选项" className="mt-6">
@@ -120,28 +118,16 @@ export default function AIDigestPage() {
                             <CardHeader>
                                 <div className="flex flex-col md:flex-row gap-4 items-end w-full">
                                     <div className="flex-1 w-full">
-                                        <Input
-                                            label="会话ID"
-                                            placeholder="请输入会话ID"
-                                            value={sessionId}
-                                            onValueChange={setSessionId}
-                                            className="max-w-xs"
-                                        />
+                                        <Input label="会话ID" placeholder="请输入会话ID" value={sessionId} onValueChange={setSessionId} className="max-w-xs" />
                                     </div>
                                     <div className="flex gap-2">
-                                        <Button
-                                            color="primary"
-                                            onPress={handleQuerySessionDigest}
-                                            isLoading={isLoading}
-                                        >
+                                        <Button color="primary" onPress={handleQuerySessionDigest} isLoading={isLoading}>
                                             {isLoading ? <Spinner size="sm" /> : "查询"}
                                         </Button>
                                     </div>
                                 </div>
                                 {isSessionChecked && (
-                                    <div className={`mt-2 ${isSummarized ? "text-success" : "text-warning"}`}>
-                                        {isSummarized ? "✅ 该会话已完成摘要" : "⚠️ 该会话尚未摘要或不存在"}
-                                    </div>
+                                    <div className={`mt-2 ${isSummarized ? "text-success" : "text-warning"}`}>{isSummarized ? "✅ 该会话已完成摘要" : "⚠️ 该会话尚未摘要或不存在"}</div>
                                 )}
                             </CardHeader>
                             <CardBody>
@@ -180,20 +166,10 @@ export default function AIDigestPage() {
                             <CardHeader>
                                 <div className="flex flex-col md:flex-row gap-4 items-end w-full">
                                     <div className="flex-1 w-full">
-                                        <Input
-                                            label="主题ID"
-                                            placeholder="请输入主题ID"
-                                            value={topicId}
-                                            onValueChange={setTopicId}
-                                            className="max-w-xs"
-                                        />
+                                        <Input label="主题ID" placeholder="请输入主题ID" value={topicId} onValueChange={setTopicId} className="max-w-xs" />
                                     </div>
                                     <div className="flex gap-2">
-                                        <Button
-                                            color="primary"
-                                            onPress={handleQueryTopicDigest}
-                                            isLoading={isTopicLoading}
-                                        >
+                                        <Button color="primary" onPress={handleQueryTopicDigest} isLoading={isTopicLoading}>
                                             {isTopicLoading ? <Spinner size="sm" /> : "查询"}
                                         </Button>
                                     </div>
@@ -212,15 +188,13 @@ export default function AIDigestPage() {
                                                     <span className="font-semibold">主题ID:</span> {topicDigest.topicId}
                                                 </div>
                                                 <div>
-                                                    <span className="font-semibold">会话ID:</span>{" "}
-                                                    {topicDigest.sessionId}
+                                                    <span className="font-semibold">会话ID:</span> {topicDigest.sessionId}
                                                 </div>
                                                 <div>
                                                     <span className="font-semibold">主题:</span> {topicDigest.topic}
                                                 </div>
                                                 <div>
-                                                    <span className="font-semibold">参与者:</span>{" "}
-                                                    {topicDigest.contributors}
+                                                    <span className="font-semibold">参与者:</span> {topicDigest.contributors}
                                                 </div>
                                             </div>
                                         </AccordionItem>
@@ -229,9 +203,7 @@ export default function AIDigestPage() {
                                         </AccordionItem>
                                     </Accordion>
                                 ) : topicId ? (
-                                    <div className="text-center text-default-500 py-8">
-                                        未找到ID为 {topicId} 的主题摘要
-                                    </div>
+                                    <div className="text-center text-default-500 py-8">未找到ID为 {topicId} 的主题摘要</div>
                                 ) : (
                                     <div className="text-center text-default-500 py-8">请输入主题ID进行查询</div>
                                 )}
