@@ -17,14 +17,15 @@ import { generateColorFromName, parseContributors, generateColorFromInterestScor
 import TopicItem from "./types/TopicItem";
 import EnhancedDetail from "./components/EnhancedDetail";
 
-import { getGroupDetails, getSessionIdsByGroupIdAndTimeRange, getSessionTimeDuration, getAIDigestResultsBySessionId } from "@/api/basicApi";
-import { getInterestScoreResult, isInterestScoreResultExist } from "@/api/interestScoreApi";
+import { getGroupDetails, getSessionIdsByGroupIdsAndTimeRange, getSessionTimeDurations, getAIDigestResultsBySessionIds } from "@/api/basicApi";
+import { getInterestScoreResults } from "@/api/interestScoreApi";
 import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
 import TopicReadStatusManager from "@/util/TopicReadStatusManager";
 import TopicFavoriteStatusManager from "@/util/TopicFavoriteStatusManager";
 import { Notification } from "@/util/Notification";
 import ResponsivePopover from "@/components/ResponsivePopover";
+import throttle from "@/util/throttle";
 
 export default function LatestTopicsPage() {
     const [topics, setTopics] = useState<TopicItem[]>([]);
@@ -81,135 +82,142 @@ export default function LatestTopicsPage() {
         initReadStatus();
     }, []);
 
-    // 获取话题的兴趣得分
-    const fetchInterestScore = async (topicId: string): Promise<number | null> => {
-        try {
-            // 先检查兴趣得分结果是否存在
-            const existResponse = await isInterestScoreResultExist(topicId);
-
-            if (!existResponse.success) {
-                console.error("检查兴趣得分结果是否存在失败:", existResponse.message);
-
-                return null;
-            }
-
-            if (!existResponse.data.isExist) {
-                // 如果不存在，返回null或默认值
-                return null;
-            }
-
-            // 如果存在，获取兴趣得分结果
-            const scoreResponse = await getInterestScoreResult(topicId);
-
-            if (!scoreResponse.success) {
-                console.error("获取兴趣得分结果失败:", scoreResponse.message);
-
-                return null;
-            }
-
-            return scoreResponse.data;
-        } catch (error) {
-            console.error("获取话题兴趣得分失败:", error);
-
-            return null;
-        }
-    };
-
     // 获取最新话题数据（带时间范围）
-    const fetchLatestTopics = async (start: Date, end: Date) => {
+    // const fetchLatestTopics = async (start: Date, end: Date) => {
+    //     setLoading(true);
+    //     try {
+    //         const groupResponse = await getGroupDetails();
+
+    //         if (!groupResponse.success) {
+    //             console.error("获取群组信息失败:", groupResponse.message);
+    //             setLoading(false);
+
+    //             return;
+    //         }
+
+    //         const groupIds = Object.keys(groupResponse.data);
+    //         const startTime = start.getTime();
+    //         const endTime = end.getTime();
+    //         const sessionId2GroupIdMap: Map<string, string> = new Map(); // 用于存储sessionId到groupId的映射
+    //         const sessionResponse = await getSessionIdsByGroupIdsAndTimeRange(groupIds, startTime, endTime);
+
+    //         if (sessionResponse.success) {
+    //             for (const { groupId, sessionIds } of sessionResponse.data) {
+    //                 for (const sessionId of sessionIds) {
+    //                     sessionId2GroupIdMap.set(sessionId, groupId);
+    //                 }
+    //             }
+    //         }
+
+    //         const sessionWithDuration: { sessionId: string; timeStart: number; timeEnd: number; groupId: string }[] = [];
+
+    //         try {
+    //             const timeResponse = await getSessionTimeDurations(Array.from(sessionId2GroupIdMap.keys()));
+
+    //             if (timeResponse.success) {
+    //                 for (const { sessionId, timeStart, timeEnd } of timeResponse.data) {
+    //                     sessionWithDuration.push({
+    //                         sessionId,
+    //                         timeStart,
+    //                         timeEnd,
+    //                         groupId: sessionId2GroupIdMap.get(sessionId) || ""
+    //                     });
+    //                 }
+    //             }
+    //         } catch (error) {
+    //             console.error(`获取时间信息失败:`, error);
+    //         }
+
+    //         sessionWithDuration.sort((a, b) => b.timeEnd - a.timeEnd);
+
+    //         const allTopics: TopicItem[] = [];
+
+    //         try {
+    //             const digestResponse = await getAIDigestResultsBySessionIds(Array.from(new Set(sessionWithDuration.map(item => item.sessionId))));
+    //             const sessionId2DurationMap = new Map(sessionWithDuration.map(item => [item.sessionId, { timeStart: item.timeStart, timeEnd: item.timeEnd }]));
+
+    //             if (digestResponse.success) {
+    //                 for (const item of digestResponse.data) {
+    //                     const topicsWithTime = item.result.map(topic => ({
+    //                         ...topic,
+    //                         timeStart: sessionId2DurationMap.get(item.sessionId)?.timeStart || 0,
+    //                         timeEnd: sessionId2DurationMap.get(item.sessionId)?.timeEnd || 0,
+    //                         groupId: sessionId2GroupIdMap.get(item.sessionId) || "" // 添加groupId
+    //                     }));
+
+    //                     allTopics.push(...topicsWithTime);
+    //                 }
+    //             }
+    //         } catch (error) {
+    //             console.error(`获取会话的摘要结果失败:`, error);
+    //         }
+
+    //         // 获取每个话题的兴趣得分
+    //         const topicsWithScores = [...allTopics];
+    //         const scoreMap: Record<string, number> = {};
+
+    //         const scores = (await getInterestScoreResults(allTopics.map(topic => topic.topicId))).data;
+
+    //         for (const { topicId, score } of scores) {
+    //             if (score !== null) {
+    //                 scoreMap[topicId] = score;
+    //             }
+    //         }
+
+    //         console.log(scoreMap);
+
+    //         setInterestScores(scoreMap);
+    //         setTopics(topicsWithScores);
+    //     } catch (error) {
+    //         console.error("获取最新话题失败:", error);
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
+
+    const fetchLatestTopicsRaw = async (start: Date, end: Date) => {
         setLoading(true);
         try {
             const groupResponse = await getGroupDetails();
 
-            if (!groupResponse.success) {
-                console.error("获取群组信息失败:", groupResponse.message);
-                setLoading(false);
-
-                return;
-            }
+            if (!groupResponse.success) throw new Error(groupResponse.message);
 
             const groupIds = Object.keys(groupResponse.data);
-            const startTime = start.getTime();
-            const endTime = end.getTime();
+            const [startTime, endTime] = [start.getTime(), end.getTime()];
+            // 获取 sessionId -> groupId 映射
+            const sessionId2GroupIdMap = new Map(
+                (await getSessionIdsByGroupIdsAndTimeRange(groupIds, startTime, endTime)).data.flatMap(({ groupId, sessionIds }) => sessionIds.map(sessionId => [sessionId, groupId]))
+            );
 
-            let allSessionIds: { sessionId: string; groupId: string }[] = []; // 修改类型以包含groupId
+            // 获取会话时间范围
+            const sessionWithDuration = (await getSessionTimeDurations(Array.from(sessionId2GroupIdMap.keys()))).data.map(item => ({
+                ...item,
+                groupId: sessionId2GroupIdMap.get(item.sessionId) || ""
+            }));
 
-            for (const groupId of groupIds) {
-                try {
-                    const sessionResponse = await getSessionIdsByGroupIdAndTimeRange(groupId, startTime, endTime);
+            sessionWithDuration.sort((a, b) => b.timeEnd - a.timeEnd); // 按结束时间降序排序
 
-                    if (sessionResponse.success) {
-                        // 为每个sessionId关联groupId
-                        const sessionsWithGroupId = sessionResponse.data.map(sessionId => ({
-                            sessionId,
-                            groupId
-                        }));
+            // 获取话题数据
+            const sessionId2DurationMap = new Map(sessionWithDuration.map(item => [item.sessionId, { timeStart: item.timeStart, timeEnd: item.timeEnd }]));
+            const digestResponse = await getAIDigestResultsBySessionIds(Array.from(new Set(sessionWithDuration.map(item => item.sessionId))));
+            const topicsWithScores = digestResponse.data.flatMap(item =>
+                item.result.map(topic => ({
+                    ...topic,
+                    timeStart: sessionId2DurationMap.get(item.sessionId)!.timeStart,
+                    timeEnd: sessionId2DurationMap.get(item.sessionId)!.timeEnd,
+                    groupId: sessionId2GroupIdMap.get(item.sessionId) || ""
+                }))
+            );
 
-                        allSessionIds = [...allSessionIds, ...sessionsWithGroupId];
-                    }
-                } catch (error) {
-                    console.error(`获取群组 ${groupId} 的会话ID失败:`, error);
-                }
-            }
+            // 获取兴趣得分
+            const scoreMap = (await getInterestScoreResults(topicsWithScores.map(t => t.topicId))).data.reduce(
+                (acc, { topicId, score }) => {
+                    if (score !== null) acc[topicId] = score;
 
-            const sessionWithDuration: { sessionId: string; timeStart: number; timeEnd: number; groupId: string }[] = [];
-
-            for (const { sessionId, groupId } of allSessionIds) {
-                try {
-                    const timeResponse = await getSessionTimeDuration(sessionId);
-
-                    if (timeResponse.success) {
-                        sessionWithDuration.push({
-                            sessionId,
-                            timeStart: timeResponse.data.timeStart,
-                            timeEnd: timeResponse.data.timeEnd,
-                            groupId // 添加groupId
-                        });
-                    }
-                } catch (error) {
-                    console.error(`获取会话 ${sessionId} 的时间信息失败:`, error);
-                }
-            }
-
-            sessionWithDuration.sort((a, b) => b.timeEnd - a.timeEnd);
-
-            const allTopics: TopicItem[] = [];
-
-            for (const { sessionId, timeStart, timeEnd, groupId } of sessionWithDuration) {
-                // 跳过不在当前筛选时间范围内的会话（可选，根据业务需求）
-                if (timeEnd < startTime || timeStart > endTime) continue;
-
-                try {
-                    const digestResponse = await getAIDigestResultsBySessionId(sessionId);
-
-                    if (digestResponse.success) {
-                        const topicsWithTime = digestResponse.data.map(topic => ({
-                            ...topic,
-                            timeStart,
-                            timeEnd,
-                            groupId // 添加groupId
-                        }));
-
-                        allTopics.push(...topicsWithTime);
-                    }
-                } catch (error) {
-                    console.error(`获取会话 ${sessionId} 的摘要结果失败:`, error);
-                }
-            }
-
-            // 获取每个话题的兴趣得分
-            const topicsWithScores = [...allTopics];
-            const scoreMap: Record<string, number> = {};
-
-            for (const topic of allTopics) {
-                const score = await fetchInterestScore(topic.topicId);
-
-                if (score) {
-                    scoreMap[topic.topicId] = score;
-                }
-            }
-
-            console.log(scoreMap);
+                    return acc;
+                },
+                {} as Record<string, number>
+            );
 
             setInterestScores(scoreMap);
             setTopics(topicsWithScores);
@@ -219,6 +227,8 @@ export default function LatestTopicsPage() {
             setLoading(false);
         }
     };
+
+    const fetchLatestTopics = throttle(fetchLatestTopicsRaw, 1000);
 
     // 初始加载 + 日期变化时重新加载
     useEffect(() => {

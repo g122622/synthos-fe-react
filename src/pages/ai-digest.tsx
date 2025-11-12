@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import { Card, CardBody, CardHeader } from "@heroui/card";
@@ -7,6 +7,7 @@ import { Tabs, Tab } from "@heroui/tabs";
 import { Accordion, AccordionItem } from "@heroui/accordion";
 import { Spinner } from "@heroui/spinner";
 import { useAsyncList } from "@react-stately/data";
+
 import { getAIDigestResultsBySessionId, getAIDigestResultByTopicId, isSessionSummarized } from "@/api/basicApi";
 import { AIDigestResult } from "@/types/app";
 import { title } from "@/components/primitives";
@@ -31,6 +32,7 @@ export default function AIDigestPage() {
             setIsLoading(true);
             try {
                 const response = await getAIDigestResultsBySessionId(sessionId);
+
                 setIsLoading(false);
 
                 if (response.success) {
@@ -39,6 +41,7 @@ export default function AIDigestPage() {
                     };
                 } else {
                     console.error("获取会话摘要失败:", response.message);
+
                     return {
                         items: []
                     };
@@ -46,6 +49,7 @@ export default function AIDigestPage() {
             } catch (error) {
                 setIsLoading(false);
                 console.error("获取会话摘要失败:", error);
+
                 return {
                     items: []
                 };
@@ -63,6 +67,7 @@ export default function AIDigestPage() {
         setIsTopicLoading(true);
         try {
             const response = await getAIDigestResultByTopicId(topicId);
+
             setIsTopicLoading(false);
 
             if (response.success) {
@@ -84,6 +89,7 @@ export default function AIDigestPage() {
 
         try {
             const response = await isSessionSummarized(sessionId);
+
             if (response.success) {
                 setIsSummarized(response.data.isSummarized);
                 setIsSessionChecked(true);
@@ -118,10 +124,10 @@ export default function AIDigestPage() {
                             <CardHeader>
                                 <div className="flex flex-col md:flex-row gap-4 items-end w-full">
                                     <div className="flex-1 w-full">
-                                        <Input label="会话ID" placeholder="请输入会话ID" value={sessionId} onValueChange={setSessionId} className="max-w-xs" />
+                                        <Input className="max-w-xs" label="会话ID" placeholder="请输入会话ID" value={sessionId} onValueChange={setSessionId} />
                                     </div>
                                     <div className="flex gap-2">
-                                        <Button color="primary" onPress={handleQuerySessionDigest} isLoading={isLoading}>
+                                        <Button color="primary" isLoading={isLoading} onPress={handleQuerySessionDigest}>
                                             {isLoading ? <Spinner size="sm" /> : "查询"}
                                         </Button>
                                     </div>
@@ -166,10 +172,10 @@ export default function AIDigestPage() {
                             <CardHeader>
                                 <div className="flex flex-col md:flex-row gap-4 items-end w-full">
                                     <div className="flex-1 w-full">
-                                        <Input label="主题ID" placeholder="请输入主题ID" value={topicId} onValueChange={setTopicId} className="max-w-xs" />
+                                        <Input className="max-w-xs" label="主题ID" placeholder="请输入主题ID" value={topicId} onValueChange={setTopicId} />
                                     </div>
                                     <div className="flex gap-2">
-                                        <Button color="primary" onPress={handleQueryTopicDigest} isLoading={isTopicLoading}>
+                                        <Button color="primary" isLoading={isTopicLoading} onPress={handleQueryTopicDigest}>
                                             {isTopicLoading ? <Spinner size="sm" /> : "查询"}
                                         </Button>
                                     </div>

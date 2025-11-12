@@ -55,23 +55,28 @@ export const getChatMessagesByGroupId = async (groupId: string, timeStart: numbe
     return response.json();
 };
 
-export const getSessionIdsByGroupIdAndTimeRange = async (groupId: string, timeStart: number, timeEnd: number): Promise<ApiResponse<string[]>> => {
-    const params = new URLSearchParams({
-        groupId,
-        timeStart: timeStart.toString(),
-        timeEnd: timeEnd.toString()
+export const getSessionIdsByGroupIdsAndTimeRange = async (groupIds: string[], timeStart: number, timeEnd: number): Promise<ApiResponse<{ groupId: string; sessionIds: string[] }[]>> => {
+    // 请求参数过大，使用post请求
+    const response = await fetchWrapper(`${API_BASE_URL}/api/session-ids-by-group-ids-and-time-range`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            groupIds,
+            timeStart,
+            timeEnd
+        })
     });
-
-    const response = await fetchWrapper(`${API_BASE_URL}/api/session-ids-by-group-id-and-time-range?${params}`);
 
     return response.json();
 };
 
-export const getSessionTimeDuration = async (sessionId: string): Promise<ApiResponse<{ timeStart: number; timeEnd: number }>> => {
-    const params = new URLSearchParams({
-        sessionId
+export const getSessionTimeDurations = async (sessionIds: string[]): Promise<ApiResponse<{ sessionId: string; timeStart: number; timeEnd: number }[]>> => {
+    // 请求参数过大，使用post请求
+    const response = await fetchWrapper(`${API_BASE_URL}/api/session-time-durations`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionIds })
     });
-    const response = await fetchWrapper(`${API_BASE_URL}/api/session-time-duration?${params}`);
 
     return response.json();
 };
@@ -96,9 +101,24 @@ export const getAIDigestResultByTopicId = async (topicId: string): Promise<ApiRe
     return response.json();
 };
 
+export const getAIDigestResultsBySessionIds = async (sessionIds: string[]): Promise<ApiResponse<{ sessionId: string; result: AIDigestResultsResponse }[]>> => {
+    // 请求参数过大，使用post请求
+    const response = await fetchWrapper(`${API_BASE_URL}/api/ai-digest-results-by-session-ids`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionIds })
+    });
+
+    return response.json();
+};
+
 export const getAIDigestResultsBySessionId = async (sessionId: string): Promise<ApiResponse<AIDigestResultsResponse>> => {
-    const params = new URLSearchParams({ sessionId });
-    const response = await fetchWrapper(`${API_BASE_URL}/api/ai-digest-results-by-session-id?${params}`);
+    // 请求参数过大，使用post请求
+    const response = await fetchWrapper(`${API_BASE_URL}/api/ai-digest-results-by-session-ids`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionIds: [sessionId] })
+    });
 
     return response.json();
 };
