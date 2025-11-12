@@ -4,7 +4,7 @@ import IndexPage from "@/pages/index";
 import ChatMessagesPage from "@/pages/chat-messages";
 import AIDigestPage from "@/pages/ai-digest";
 import GroupsPage from "@/pages/groups";
-import LatestTopicsPage from "./pages/latest-topics";
+import LatestTopicsPage from "./pages/latest-topics/latest-topics";
 
 function App() {
     return (
