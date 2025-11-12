@@ -23,6 +23,7 @@ import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
 import TopicReadStatusManager from "@/util/TopicReadStatusManager";
 import TopicFavoriteStatusManager from "@/util/TopicFavoriteStatusManager";
+import { Notification } from "@/util/Notification";
 
 export default function LatestTopicsPage() {
     const [topics, setTopics] = useState<TopicItem[]>([]);
@@ -306,19 +307,15 @@ export default function LatestTopicsPage() {
             // 使用TopicReadStatusManager更新IndexedDB
             await TopicReadStatusManager.getInstance().markAsRead(topicId);
 
-            addToast({
+            Notification.success({
                 title: "标记成功",
-                description: "话题已标记为已读",
-                color: "success",
-                variant: "flat"
+                description: "话题已标记为已读"
             });
         } catch (error) {
             console.error("Failed to mark topic as read:", error);
-            addToast({
+            Notification.error({
                 title: "标记失败",
-                description: "无法标记话题为已读",
-                color: "danger",
-                variant: "flat"
+                description: "无法标记话题为已读"
             });
         }
     };
@@ -335,11 +332,9 @@ export default function LatestTopicsPage() {
                     ...prev,
                     [topicId]: false
                 }));
-                addToast({
+                Notification.success({
                     title: "取消收藏",
-                    description: "话题已从收藏中移除",
-                    color: "success",
-                    variant: "flat"
+                    description: "话题已从收藏中移除"
                 });
             } else {
                 // 添加收藏
@@ -348,20 +343,16 @@ export default function LatestTopicsPage() {
                     ...prev,
                     [topicId]: true
                 }));
-                addToast({
+                Notification.success({
                     title: "收藏成功",
-                    description: "话题已添加到收藏",
-                    color: "success",
-                    variant: "flat"
+                    description: "话题已添加到收藏"
                 });
             }
         } catch (error) {
             console.error("Failed to toggle favorite status:", error);
-            addToast({
+            Notification.error({
                 title: "操作失败",
-                description: "无法更新收藏状态",
-                color: "danger",
-                variant: "flat"
+                description: "无法更新收藏状态"
             });
         }
     };
@@ -506,20 +497,16 @@ export default function LatestTopicsPage() {
                                                                         navigator.clipboard
                                                                             .writeText(contentToCopy)
                                                                             .then(() => {
-                                                                                addToast({
-                                                                                    title: "已复制到剪贴板",
-                                                                                    variant: "flat",
-                                                                                    color: "success",
-                                                                                    timeout: 2000
+                                                                                Notification.success({
+                                                                                    title: "复制成功",
+                                                                                    description: "话题内容已复制到剪贴板"
                                                                                 });
                                                                             })
                                                                             .catch(err => {
                                                                                 console.error("复制失败:", err);
-                                                                                addToast({
+                                                                                Notification.error({
                                                                                     title: "复制失败",
-                                                                                    variant: "flat",
-                                                                                    color: "danger",
-                                                                                    timeout: 2000
+                                                                                    description: "无法复制话题内容"
                                                                                 });
                                                                             });
                                                                     }}
@@ -693,19 +680,15 @@ export default function LatestTopicsPage() {
                                                 });
                                                 setReadTopics(newReadTopics);
 
-                                                addToast({
+                                                Notification.success({
                                                     title: "批量标记成功",
-                                                    description: `已将 ${unreadTopics.length} 个话题标记为已读`,
-                                                    color: "success",
-                                                    variant: "flat"
+                                                    description: `已将 ${unreadTopics.length} 个话题标记为已读`
                                                 });
                                             } catch (error) {
                                                 console.error("Failed to mark all topics as read:", error);
-                                                addToast({
+                                                Notification.error({
                                                     title: "批量标记失败",
-                                                    description: "无法标记所有话题为已读",
-                                                    color: "danger",
-                                                    variant: "flat"
+                                                    description: "无法标记所有话题为已读"
                                                 });
                                             }
                                         }}
