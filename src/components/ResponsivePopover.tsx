@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Popover, PopoverTrigger, PopoverContent, Button } from "@heroui/react"; // 假设你用的是 Chakra UI
+import setViewportScale from "@/util/setViewportScale";
 
 // 自定义 Hook：监听媒体查询
 function useMediaQuery(query: string): boolean {
@@ -33,6 +34,8 @@ const ResponsivePopover: React.FC<ResponsivePopoverProps> = ({ buttonText, child
     if (!isSmallScreen) {
         return <>{children}</>;
     }
+
+    setViewportScale(90);
 
     return (
         <Popover placement="bottom">
