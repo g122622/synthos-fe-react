@@ -6,7 +6,7 @@ import { Pagination } from "@heroui/pagination";
 import { Spinner } from "@heroui/spinner";
 import { Chip } from "@heroui/chip";
 import { ScrollShadow } from "@heroui/scroll-shadow";
-import { DateRangePicker, Tooltip, addToast, Input, Checkbox } from "@heroui/react";
+import { DateRangePicker, Tooltip, Input, Checkbox, Popover, PopoverTrigger, PopoverContent } from "@heroui/react";
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@heroui/dropdown";
 import { Button as HeroUIButton } from "@heroui/button";
 import { MoreVertical, Check, Copy, Search, Star } from "lucide-react";
@@ -24,6 +24,7 @@ import DefaultLayout from "@/layouts/default";
 import TopicReadStatusManager from "@/util/TopicReadStatusManager";
 import TopicFavoriteStatusManager from "@/util/TopicFavoriteStatusManager";
 import { Notification } from "@/util/Notification";
+import ResponsivePopover from "@/components/ResponsivePopover";
 
 export default function LatestTopicsPage() {
     const [topics, setTopics] = useState<TopicItem[]>([]);
@@ -359,8 +360,8 @@ export default function LatestTopicsPage() {
 
     return (
         <DefaultLayout>
-            <section className="flex flex-col gap-4 py-8 md:py-10">
-                <div className="flex items-center justify-center">
+            <section className="flex flex-col gap-4 py-0 md:py-10">
+                <div className="hidden sm:flex items-center justify-center">
                     <img alt="logo" className="w-21 mr-5" src="./logo.webp" />
                     <div className="flex flex-col items-center justify-center gap-4">
                         <h1 className={title()}>最新话题</h1>
@@ -368,15 +369,15 @@ export default function LatestTopicsPage() {
                     </div>
                 </div>
 
-                <Card className="mt-6">
-                    <CardHeader className="flex flex-col md:flex-row justify-between items-center pl-7 pr-7 gap-4">
-                        <div className="flex flex-col md:flex-row items-center gap-4">
-                            <h2 className="text-xl font-bold">话题列表 ({filteredTopics.length})</h2>
+                <Card className="mt-0 md:mt-6">
+                    <CardHeader className="flex flex-row justify-between items-center pl-7 pr-7 gap-4">
+                        <div className="flex flex-row items-center gap-4">
+                            <h2 className="text-xl font-bold min-w-[135px]">话题列表 ({filteredTopics.length})</h2>
                             <Input
                                 isClearable
                                 aria-label="全文搜索"
-                                className="max-w-[200px]"
-                                placeholder="搜索话题..."
+                                className="max-w-[135px]"
+                                placeholder="搜索..."
                                 startContent={<Search size={16} />}
                                 value={searchText}
                                 onValueChange={setSearchText}
@@ -384,10 +385,10 @@ export default function LatestTopicsPage() {
                         </div>
 
                         {/* 顶栏右侧 */}
-                        <div className="flex flex-col md:flex-row items-center gap-4">
-                            {/* 筛选控件 */}
-                            <div className="flex gap-3 items-center">
-                                <div className="flex items-center gap-2">
+                        <ResponsivePopover buttonText="筛选...">
+                            <div className="flex flex-col lg:flex-row lg:items-center gap-4 p-3 lg:p-0">
+                                {/* 筛选控件 */}
+                                <div className="flex gap-3 items-center">
                                     <div className="text-default-600 text-sm w-27">每页显示:</div>
                                     <Slider
                                         aria-label="每页显示话题数量"
@@ -444,7 +445,7 @@ export default function LatestTopicsPage() {
                                     刷新
                                 </Button>
                             </div>
-                        </div>
+                        </ResponsivePopover>
                     </CardHeader>
 
                     <CardBody className="relative">
@@ -454,8 +455,8 @@ export default function LatestTopicsPage() {
                             </div>
                         ) : currentTopics.length > 0 ? (
                             <div className="flex flex-col gap-4">
-                                <ScrollShadow className="max-h-[700px]">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-5">
+                                <ScrollShadow className="max-h-[calc(100vh-220px)]">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-0 md:p-5">
                                         {currentTopics.map((topic, index) => {
                                             // 解析参与者
                                             const contributorsArray = parseContributors(topic.contributors);
@@ -484,7 +485,7 @@ export default function LatestTopicsPage() {
                                                         )}
                                                         <div className="flex justify-between items-start">
                                                             {/* 正文部分 */}
-                                                            <h3 className="text-lg font-bold max-w-70">{topic.topic}</h3>
+                                                            <h3 className="text-lg font-bold max-w-60 word-break break-all">{topic.topic}</h3>
                                                             <Tooltip color="default" content="复制话题内容" placement="top">
                                                                 <HeroUIButton
                                                                     isIconOnly
@@ -654,7 +655,7 @@ export default function LatestTopicsPage() {
 
                         {/* 整页已读按钮 - 固定在右下角 */}
                         {!loading && currentTopics.length > 0 && currentTopics.some(topic => !readTopics[topic.topicId]) && (
-                            <div className="absolute bottom-4 right-4">
+                            <div className="absolute bottom-4 right-4 hidden md:block">
                                 <Tooltip color="primary" content="将当前页面所有未读话题标记为已读" placement="top">
                                     <Button
                                         color="primary"
