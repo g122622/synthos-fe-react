@@ -302,21 +302,14 @@ export default function GroupsPage() {
             <section className="flex flex-col gap-4 py-8 md:py-10">
                 <div className="flex flex-col items-center justify-center gap-4">
                     <h1 className={title()}>群组管理</h1>
-                    <p className="text-default-600 max-w-2xl text-center">
-                        管理QQ群组配置信息，查看群组AI模型设置和分组策略
-                    </p>
+                    <p className="text-default-600 max-w-2xl text-center">管理QQ群组配置信息，查看群组AI模型设置和分组策略</p>
                 </div>
 
                 <Card className="mt-6">
                     <CardHeader>
                         <div className="flex justify-between items-center w-full p-3">
                             <h3 className="text-lg font-bold">群组列表 ({Object.entries(groups).length})</h3>
-                            <Button
-                                color="primary"
-                                isLoading={isLoading}
-                                size="sm"
-                                onPress={() => window.location.reload()}
-                            >
+                            <Button color="primary" isLoading={isLoading} size="sm" onPress={() => window.location.reload()}>
                                 {isLoading ? <Spinner size="sm" /> : "刷新"}
                             </Button>
                         </div>
@@ -376,31 +369,19 @@ export default function GroupsPage() {
                                             </TableCell>
                                             <TableCell className="font-semibold">{groupId}</TableCell>
                                             <TableCell>
-                                                <Chip
-                                                    color={groupDetail.IM === "QQ" ? "primary" : "secondary"}
-                                                    variant="flat"
-                                                >
+                                                <Chip color={groupDetail.IM === "QQ" ? "primary" : "secondary"} variant="flat">
                                                     {groupDetail.IM}
                                                 </Chip>
                                             </TableCell>
                                             <TableCell>{groupDetail.groupIntroduction}</TableCell>
                                             <TableCell>
-                                                <Chip
-                                                    color={getSplitStrategyColor(groupDetail.splitStrategy)}
-                                                    variant="flat"
-                                                >
+                                                <Chip color={getSplitStrategyColor(groupDetail.splitStrategy)} variant="flat">
                                                     {getSplitStrategyLabel(groupDetail.splitStrategy)}
                                                 </Chip>
                                             </TableCell>
                                             <TableCell>{getAIModelLabel(groupDetail.aiModel)}</TableCell>
                                             <TableCell>
-                                                {recentMessageCounts[groupId] !== undefined ? (
-                                                    <span className="font-semibold">
-                                                        {recentMessageCounts[groupId]}
-                                                    </span>
-                                                ) : (
-                                                    <Spinner size="sm" />
-                                                )}
+                                                {recentMessageCounts[groupId] !== undefined ? <span className="font-semibold">{recentMessageCounts[groupId]}</span> : <Spinner size="sm" />}
                                             </TableCell>
                                             <TableCell>
                                                 <div
