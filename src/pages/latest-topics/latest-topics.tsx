@@ -41,9 +41,9 @@ export default function LatestTopicsPage() {
     const [sortByInterest, setSortByInterest] = useState<boolean>(false); // 按兴趣度排序
     const [searchText, setSearchText] = useState<string>(""); // 全文搜索
 
-    // 默认时间范围：最近7天
+    // 默认时间范围
     const [dateRange, setDateRange] = useState({
-        start: today(getLocalTimeZone()).subtract({ days: 3 }),
+        start: today(getLocalTimeZone()).subtract({ days: 1 }),
         end: today(getLocalTimeZone()).add({ days: 1 })
     });
 
