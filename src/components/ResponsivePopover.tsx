@@ -37,7 +37,7 @@ const ResponsivePopover: React.FC<ResponsivePopoverProps> = ({ buttonText, child
     return (
         <Popover placement="bottom">
             <PopoverTrigger>
-                <Button>{buttonText}</Button>
+                <Button color="primary">{buttonText}</Button>
             </PopoverTrigger>
             <PopoverContent>{children}</PopoverContent>
         </Popover>
