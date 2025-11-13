@@ -19,10 +19,9 @@ import EnhancedDetail from "./components/EnhancedDetail";
 
 import { getGroupDetails, getSessionIdsByGroupIdsAndTimeRange, getSessionTimeDurations, getAIDigestResultsBySessionIds } from "@/api/basicApi";
 import { getInterestScoreResults } from "@/api/interestScoreApi";
+import { markTopicAsRead, getTopicsReadStatus, markTopicAsFavorite, removeTopicFromFavorites, getTopicsFavoriteStatus } from "@/api/readAndFavApi";
 import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
-import TopicReadStatusManager from "@/util/TopicReadStatusManager";
-import TopicFavoriteStatusManager from "@/util/TopicFavoriteStatusManager";
 import { Notification } from "@/util/Notification";
 import ResponsivePopover from "@/components/ResponsivePopover";
 import throttle from "@/util/throttle";
@@ -48,132 +47,41 @@ export default function LatestTopicsPage() {
         end: today(getLocalTimeZone()).add({ days: 1 })
     });
 
-    // 初始化收藏状态管理器
-    const favoriteStatusManager = useMemo(() => TopicFavoriteStatusManager.getInstance(), []);
-
     // 加载收藏状态
     useEffect(() => {
         const loadFavoriteStatus = async () => {
-            try {
-                const status = await favoriteStatusManager.getAllFavoriteStatus();
+            if (topics.length === 0) return;
 
-                setFavoriteTopics(status);
+            try {
+                const topicIds = topics.map(topic => topic.topicId);
+                const status = await getTopicsFavoriteStatus(topicIds);
+
+                setFavoriteTopics(status.data.favoriteStatus);
             } catch (error) {
                 console.error("Failed to load favorite status:", error);
             }
         };
 
         loadFavoriteStatus();
-    }, []);
+    }, [topics]);
 
     // 初始化已读状态
     useEffect(() => {
         const initReadStatus = async () => {
-            try {
-                const readStatusManager = TopicReadStatusManager.getInstance();
-                const readStatus = await readStatusManager.getAllReadStatus();
+            if (topics.length === 0) return;
 
-                setReadTopics(readStatus);
+            try {
+                const topicIds = topics.map(topic => topic.topicId);
+                const readStatus = await getTopicsReadStatus(topicIds);
+
+                setReadTopics(readStatus.data.readStatus);
             } catch (error) {
                 console.error("初始化已读状态失败:", error);
             }
         };
 
         initReadStatus();
-    }, []);
-
-    // 获取最新话题数据（带时间范围）
-    // const fetchLatestTopics = async (start: Date, end: Date) => {
-    //     setLoading(true);
-    //     try {
-    //         const groupResponse = await getGroupDetails();
-
-    //         if (!groupResponse.success) {
-    //             console.error("获取群组信息失败:", groupResponse.message);
-    //             setLoading(false);
-
-    //             return;
-    //         }
-
-    //         const groupIds = Object.keys(groupResponse.data);
-    //         const startTime = start.getTime();
-    //         const endTime = end.getTime();
-    //         const sessionId2GroupIdMap: Map<string, string> = new Map(); // 用于存储sessionId到groupId的映射
-    //         const sessionResponse = await getSessionIdsByGroupIdsAndTimeRange(groupIds, startTime, endTime);
-
-    //         if (sessionResponse.success) {
-    //             for (const { groupId, sessionIds } of sessionResponse.data) {
-    //                 for (const sessionId of sessionIds) {
-    //                     sessionId2GroupIdMap.set(sessionId, groupId);
-    //                 }
-    //             }
-    //         }
-
-    //         const sessionWithDuration: { sessionId: string; timeStart: number; timeEnd: number; groupId: string }[] = [];
-
-    //         try {
-    //             const timeResponse = await getSessionTimeDurations(Array.from(sessionId2GroupIdMap.keys()));
-
-    //             if (timeResponse.success) {
-    //                 for (const { sessionId, timeStart, timeEnd } of timeResponse.data) {
-    //                     sessionWithDuration.push({
-    //                         sessionId,
-    //                         timeStart,
-    //                         timeEnd,
-    //                         groupId: sessionId2GroupIdMap.get(sessionId) || ""
-    //                     });
-    //                 }
-    //             }
-    //         } catch (error) {
-    //             console.error(`获取时间信息失败:`, error);
-    //         }
-
-    //         sessionWithDuration.sort((a, b) => b.timeEnd - a.timeEnd);
-
-    //         const allTopics: TopicItem[] = [];
-
-    //         try {
-    //             const digestResponse = await getAIDigestResultsBySessionIds(Array.from(new Set(sessionWithDuration.map(item => item.sessionId))));
-    //             const sessionId2DurationMap = new Map(sessionWithDuration.map(item => [item.sessionId, { timeStart: item.timeStart, timeEnd: item.timeEnd }]));
-
-    //             if (digestResponse.success) {
-    //                 for (const item of digestResponse.data) {
-    //                     const topicsWithTime = item.result.map(topic => ({
-    //                         ...topic,
-    //                         timeStart: sessionId2DurationMap.get(item.sessionId)?.timeStart || 0,
-    //                         timeEnd: sessionId2DurationMap.get(item.sessionId)?.timeEnd || 0,
-    //                         groupId: sessionId2GroupIdMap.get(item.sessionId) || "" // 添加groupId
-    //                     }));
-
-    //                     allTopics.push(...topicsWithTime);
-    //                 }
-    //             }
-    //         } catch (error) {
-    //             console.error(`获取会话的摘要结果失败:`, error);
-    //         }
-
-    //         // 获取每个话题的兴趣得分
-    //         const topicsWithScores = [...allTopics];
-    //         const scoreMap: Record<string, number> = {};
-
-    //         const scores = (await getInterestScoreResults(allTopics.map(topic => topic.topicId))).data;
-
-    //         for (const { topicId, score } of scores) {
-    //             if (score !== null) {
-    //                 scoreMap[topicId] = score;
-    //             }
-    //         }
-
-    //         console.log(scoreMap);
-
-    //         setInterestScores(scoreMap);
-    //         setTopics(topicsWithScores);
-    //     } catch (error) {
-    //         console.error("获取最新话题失败:", error);
-    //     } finally {
-    //         setLoading(false);
-    //     }
-    // };
+    }, [topics]);
 
     const fetchLatestTopicsRaw = async (start: Date, end: Date) => {
         setLoading(true);
@@ -315,8 +223,8 @@ export default function LatestTopicsPage() {
                 [topicId]: true
             }));
 
-            // 使用TopicReadStatusManager更新IndexedDB
-            await TopicReadStatusManager.getInstance().markAsRead(topicId);
+            // 使用新的API标记为已读
+            await markTopicAsRead(topicId);
 
             Notification.success({
                 title: "标记成功",
@@ -324,6 +232,11 @@ export default function LatestTopicsPage() {
             });
         } catch (error) {
             console.error("Failed to mark topic as read:", error);
+            // 如果API调用失败，回滚本地状态
+            setReadTopics(prev => ({
+                ...prev,
+                [topicId]: false
+            }));
             Notification.error({
                 title: "标记失败",
                 description: "无法标记话题为已读"
@@ -336,24 +249,22 @@ export default function LatestTopicsPage() {
         try {
             const isCurrentlyFavorite = favoriteTopics[topicId];
 
+            // 更新本地状态（乐观更新）
+            setFavoriteTopics(prev => ({
+                ...prev,
+                [topicId]: !isCurrentlyFavorite
+            }));
+
             if (isCurrentlyFavorite) {
                 // 取消收藏
-                await favoriteStatusManager.removeFromFavorites(topicId);
-                setFavoriteTopics(prev => ({
-                    ...prev,
-                    [topicId]: false
-                }));
+                await removeTopicFromFavorites(topicId);
                 Notification.success({
                     title: "取消收藏",
                     description: "话题已从收藏中移除"
                 });
             } else {
                 // 添加收藏
-                await favoriteStatusManager.markAsFavorite(topicId);
-                setFavoriteTopics(prev => ({
-                    ...prev,
-                    [topicId]: true
-                }));
+                await markTopicAsFavorite(topicId);
                 Notification.success({
                     title: "收藏成功",
                     description: "话题已添加到收藏"
@@ -361,6 +272,11 @@ export default function LatestTopicsPage() {
             }
         } catch (error) {
             console.error("Failed to toggle favorite status:", error);
+            // 如果API调用失败，回滚本地状态
+            setFavoriteTopics(prev => ({
+                ...prev,
+                [topicId]: favoriteTopics[topicId]
+            }));
             Notification.error({
                 title: "操作失败",
                 description: "无法更新收藏状态"
@@ -677,11 +593,9 @@ export default function LatestTopicsPage() {
 
                                             try {
                                                 // 批量标记为已读
-                                                const readStatusManager = TopicReadStatusManager.getInstance();
+                                                const promises = unreadTopics.map(topic => markTopicAsRead(topic.topicId));
 
-                                                for (const topic of unreadTopics) {
-                                                    await readStatusManager.markAsRead(topic.topicId);
-                                                }
+                                                await Promise.all(promises);
 
                                                 // 更新本地状态
                                                 const newReadTopics = { ...readTopics };
