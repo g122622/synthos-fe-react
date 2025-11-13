@@ -212,7 +212,7 @@ export default function LatestTopicsPage() {
         });
     }, [filteredTopics, sortByInterest, interestScores]);
 
-    const currentTopics = sortedTopics.slice((page - 1) * topicsPerPage, page * topicsPerPage);
+    const currentPageTopics = sortedTopics.slice((page - 1) * topicsPerPage, page * topicsPerPage);
 
     // 标记话题为已读
     const markAsRead = async (topicId: string) => {
@@ -379,11 +379,11 @@ export default function LatestTopicsPage() {
                             <div className="flex justify-center items-center h-64">
                                 <Spinner size="lg" />
                             </div>
-                        ) : currentTopics.length > 0 ? (
+                        ) : currentPageTopics.length > 0 ? (
                             <div className="flex flex-col gap-4">
                                 <ScrollShadow className="max-h-[calc(100vh-220px)]">
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-0 md:p-5">
-                                        {currentTopics.map((topic, index) => {
+                                        {currentPageTopics.map((topic, index) => {
                                             // 解析参与者
                                             const contributorsArray = parseContributors(topic.contributors);
 
@@ -580,7 +580,7 @@ export default function LatestTopicsPage() {
                         )}
 
                         {/* 整页已读按钮 - 固定在右下角 */}
-                        {!loading && currentTopics.length > 0 && currentTopics.some(topic => !readTopics[topic.topicId]) && (
+                        {!loading && currentPageTopics.length > 0 && currentPageTopics.some(topic => !readTopics[topic.topicId]) && (
                             <div className="absolute bottom-4 right-4 hidden md:block">
                                 <Tooltip color="primary" content="将当前页面所有未读话题标记为已读" placement="top">
                                     <Button
@@ -589,7 +589,7 @@ export default function LatestTopicsPage() {
                                         startContent={<Check size={16} />}
                                         variant="flat"
                                         onPress={async () => {
-                                            const unreadTopics = currentTopics.filter(topic => !readTopics[topic.topicId]);
+                                            const unreadTopics = currentPageTopics.filter(topic => !readTopics[topic.topicId]);
 
                                             try {
                                                 // 批量标记为已读
