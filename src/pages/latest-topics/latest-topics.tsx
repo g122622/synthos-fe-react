@@ -327,7 +327,9 @@ export default function LatestTopicsPage() {
                                         size="md"
                                         step={3}
                                         value={topicsPerPage}
-                                        onChange={setTopicsPerPage}
+                                        onChange={value => {
+                                            setTopicsPerPage(Number(value));
+                                        }}
                                     />
                                     <span className="text-default-900 text-sm w-30">{topicsPerPage} 张卡片</span>
                                 </div>
